@@ -194,10 +194,10 @@ static inline void uart_read_bytes(uint8_t itf)
 
 		while (uart_is_readable(ui->inst) && (ud->uart_pos < BUFFER_SIZE)) 
 		{
-			if(ud->echo_cnt > 0)
+			if(ud->pending_echo_bytes > 0)
 			{
 				(void) uart_getc(ui->inst);
-				ud->echo_cnt--;		
+				ud->pending_echo_bytes--;		
 			} 
 			else
 			{
@@ -237,11 +237,11 @@ void uart_write_bytes(uint8_t itf)
 		{
 			if(ui->remove_echo)	 
 			{  
-				ud->echo_cnt++;
+				ud->pending_echo_bytes++;
 			} 
 			else 
 			{
-				ud->echo_cnt = 0;
+				ud->pending_echo_bytes = 0;
 			}
 			uart_putc_raw(ui->inst, ud->usb_buffer[count]);
 			count++;
@@ -293,7 +293,7 @@ void init_uart_data(uint8_t itf)
 	ud->usb_pos = 0;
 	
 	/* echo counter */
-	ud->echo_cnt = 0;
+	ud->pending_echo_bytes = 0;
 
 	/* Mutex */
 	mutex_init(&ud->lc_mtx);

@@ -36,7 +36,7 @@ typedef struct {
 	uint8_t usb_buffer[BUFFER_SIZE];
 	uint32_t usb_pos;
 	mutex_t usb_mtx;
-	uint32_t echo_cnt;
+	uint32_t pending_echo_bytes;
 } uart_data_t;
 
 
