@@ -1,7 +1,7 @@
 Raspberry Pi Pico USB-UART Bridge
 =================================
 
-This program bridges the Raspberry Pi Pico HW UARTs to two independent USB CDC serial devices in order to behave like any other USB-to-UART Bridge controllers.
+This program creates a USB to OneWire UART bridge on the uniesc hardware.
 
 Disclaimer
 ----------
