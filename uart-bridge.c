@@ -248,6 +248,22 @@ void core1_entry(void)
 	}
 }
 
+
+void dbg_print_usb(uint8_t itf, const char *msg)
+{
+	uart_data_t *ud = &UART_DATA[itf];
+
+	mutex_enter_blocking(&ud->uart_mtx);
+
+	while (*msg && (ud->uart_pos < BUFFER_SIZE)) 
+	{
+	    ud->uart_buffer[ud->uart_pos] = *msg++;
+		ud->uart_pos++;
+	}
+
+	mutex_exit(&ud->uart_mtx);
+}
+
 static inline void uart_read_bytes(uint8_t itf)
 {
 	uart_data_t *ud = &UART_DATA[itf];
@@ -423,6 +439,9 @@ int main(void)
 {
 	int itf;
 	int rc;
+	uint8_t btn[2];
+	uint8_t vusb[2];
+	uint8_t escpwr[2];
 	
 	// init gpio
 	rc = pico_led_init();
@@ -441,9 +460,9 @@ int main(void)
 	gpio_put(LED_PIN_RED, 1);
 	pico_set_led(0);
 	// read inputs 
-	pico_get_vusb();
-	gpio_get(SW_PIN);
-	gpio_get(ESC_PWR_PIN);
+	vusb[0] = vusb[1] = pico_get_vusb();
+	btn[0] = btn[1] = gpio_get(SW_PIN);
+	escpwr[0] = escpwr[1] = gpio_get(ESC_PWR_PIN);
 
 	usbd_serial_init();
 
@@ -456,6 +475,18 @@ int main(void)
 		for (itf = 0; itf < CFG_TUD_CDC; itf++) {
 			update_uart_cfg(itf);
 			uart_write_bytes(itf);
+		}
+		
+		btn[0] = gpio_get(SW_PIN);
+		if(btn[0] == 0 && btn[1] == 1)
+		{
+			btn[1] = btn[0];
+			dbg_print_usb(1, "Button pressed\n");
+		}
+		else if(btn[0] == 1 && btn[1] == 0)
+		{
+			btn[1] = btn[0];
+			dbg_print_usb(1, "Button released\n");
 		}
 	}
 
