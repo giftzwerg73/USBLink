@@ -11,11 +11,18 @@
 #include <string.h>
 #include <tusb.h>
 
+#ifdef CYW43_WL_GPIO_LED_PIN
+#include "pico/cyw43_arch.h"
+#endif
+
 #if !defined(MIN)
 #define MIN(a, b) ((a > b) ? b : a)
 #endif /* MIN */
 
-#define LED_PIN 25
+#define ESC_PWR_PIN 2
+#define SW_PIN 15
+#define LED_PIN_BLUE 16
+#define LED_PIN_RED 17
 
 #define BUFFER_SIZE 2560
 
@@ -30,6 +37,8 @@ typedef struct {
 	void *irq_fn;
 	uint8_t tx_pin;
 	uint8_t rx_pin;
+    uint8_t invert;
+    uint8_t remove_echo;
 } uart_id_t;
 
 typedef struct {
@@ -42,6 +51,7 @@ typedef struct {
 	uint8_t usb_buffer[BUFFER_SIZE];
 	uint32_t usb_pos;
 	mutex_t usb_mtx;
+	uint32_t echo_cnt;
 } uart_data_t;
 
 void uart0_irq_fn(void);
@@ -52,16 +62,25 @@ const uart_id_t UART_ID[CFG_TUD_CDC] = {
 		.inst = uart0,
 		.irq = UART0_IRQ,
 		.irq_fn = &uart0_irq_fn,
-		.tx_pin = 16,
-		.rx_pin = 17,
+		.tx_pin = 12,
+		.rx_pin = 13,
+		.invert = 1,
+		.remove_echo = 1,
 	}, {
 		.inst = uart1,
 		.irq = UART1_IRQ,
 		.irq_fn = &uart1_irq_fn,
 		.tx_pin = 4,
 		.rx_pin = 5,
+		.invert = 0,
+		.remove_echo = 0,
 	}
 };
+
+// prototypes
+int pico_led_init(void);
+void pico_set_led(bool led_on);
+bool pico_get_vusb(void);
 
 uart_data_t UART_DATA[CFG_TUD_CDC];
 
@@ -151,20 +170,23 @@ void usb_write_bytes(uint8_t itf)
 {
 	uart_data_t *ud = &UART_DATA[itf];
 
-	if (ud->uart_pos &&
-	    mutex_try_enter(&ud->uart_mtx, NULL)) {
+	if (ud->uart_pos && mutex_try_enter(&ud->uart_mtx, NULL)) 
+	{
 		uint32_t count;
 
 		count = tud_cdc_n_write(itf, ud->uart_buffer, ud->uart_pos);
 		if (count < ud->uart_pos)
-			memmove(ud->uart_buffer, &ud->uart_buffer[count],
-			       ud->uart_pos - count);
+		{
+			memmove(ud->uart_buffer, &ud->uart_buffer[count], ud->uart_pos - count);
+		}
 		ud->uart_pos -= count;
 
 		mutex_exit(&ud->uart_mtx);
 
 		if (count)
+		{
 			tud_cdc_n_write_flush(itf);
+		}
 	}
 }
 
@@ -182,22 +204,47 @@ void usb_cdc_process(uint8_t itf)
 
 void core1_entry(void)
 {
+	int itf;
+	int con[CFG_TUD_CDC];
+	int con_prev[CFG_TUD_CDC];
+	
+	for (itf=0;itf<CFG_TUD_CDC;itf++) 
+	{
+	    con[itf] = 0;
+	    con_prev[itf] = con[itf]; 
+	    if(itf == 0)
+	    {
+	        pico_set_led(con[0]); 
+		}
+    }
+	
 	tusb_init();
 
-	while (1) {
-		int itf;
-		int con = 0;
-
+	while (1) 
+	{
 		tud_task();
 
-		for (itf = 0; itf < CFG_TUD_CDC; itf++) {
-			if (tud_cdc_n_connected(itf)) {
-				con = 1;
+		for (itf=0;itf<CFG_TUD_CDC;itf++) 
+		{
+			if (tud_cdc_n_connected(itf)) 
+			{
+			    con[itf] = 1;
 				usb_cdc_process(itf);
 			}
+			else
+			{
+				con[itf] = 0;
+			}
+			
+			if(con[itf] != con_prev[itf])
+            {   
+				con_prev[itf] = con[itf];
+			    if(itf == 0)
+	            {
+			        pico_set_led(con[itf]); 
+			    }
+		    } 
 		}
-
-		gpio_put(LED_PIN, con);
 	}
 }
 
@@ -206,15 +253,28 @@ static inline void uart_read_bytes(uint8_t itf)
 	uart_data_t *ud = &UART_DATA[itf];
 	const uart_id_t *ui = &UART_ID[itf];
 
-	if (uart_is_readable(ui->inst)) {
+	if (uart_is_readable(ui->inst))
+	{
 		mutex_enter_blocking(&ud->uart_mtx);
 
-		while (uart_is_readable(ui->inst) &&
-		       (ud->uart_pos < BUFFER_SIZE)) {
-			ud->uart_buffer[ud->uart_pos] = uart_getc(ui->inst);
-			ud->uart_pos++;
+		while (uart_is_readable(ui->inst) && (ud->uart_pos < BUFFER_SIZE)) 
+		{
+			if(ud->echo_cnt > 0)
+			{
+				(void) uart_getc(ui->inst);
+				ud->echo_cnt--;		
+			} 
+			else
+			{
+			   ud->uart_buffer[ud->uart_pos] = uart_getc(ui->inst);
+			   ud->uart_pos++;
+			   if(ui->inst == uart0)
+			   {
+			       gpio_put(LED_PIN_RED, !gpio_get_out_level(LED_PIN_RED));
+			   }
+		    }
 		}
-
+        
 		mutex_exit(&ud->uart_mtx);
 	}
 }
@@ -233,22 +293,35 @@ void uart_write_bytes(uint8_t itf)
 {
 	uart_data_t *ud = &UART_DATA[itf];
 
-	if (ud->usb_pos &&
-	    mutex_try_enter(&ud->usb_mtx, NULL)) {
+	if (ud->usb_pos && mutex_try_enter(&ud->usb_mtx, NULL)) 
+	{
 		const uart_id_t *ui = &UART_ID[itf];
 		uint32_t count = 0;
 
-		while (uart_is_writable(ui->inst) &&
-		       count < ud->usb_pos) {
+		while (uart_is_writable(ui->inst) && count < ud->usb_pos) 
+		{
+			if(ui->remove_echo)	 
+			{  
+				ud->echo_cnt++;
+			} 
+			else 
+			{
+				ud->echo_cnt = 0;
+			}
 			uart_putc_raw(ui->inst, ud->usb_buffer[count]);
 			count++;
+			
+			if(ui->inst == uart0)
+			{
+			    gpio_put(LED_PIN_BLUE, !gpio_get_out_level(LED_PIN_BLUE));
+			}
 		}
 
 		if (count < ud->usb_pos)
-			memmove(ud->usb_buffer, &ud->usb_buffer[count],
-			       ud->usb_pos - count);
-		ud->usb_pos -= count;
-
+		{
+			memmove(ud->usb_buffer, &ud->usb_buffer[count], ud->usb_pos -= count);
+        }
+        ud->usb_pos -= count;
 		mutex_exit(&ud->usb_mtx);
 	}
 }
@@ -261,7 +334,13 @@ void init_uart_data(uint8_t itf)
 	/* Pinmux */
 	gpio_set_function(ui->tx_pin, GPIO_FUNC_UART);
 	gpio_set_function(ui->rx_pin, GPIO_FUNC_UART);
-
+	gpio_set_pulls(ui->rx_pin, true, false);
+	if(ui->invert)
+	{
+	    gpio_set_outover(ui->tx_pin, GPIO_OVERRIDE_INVERT);
+        gpio_set_inover(ui->rx_pin, GPIO_OVERRIDE_INVERT);
+	}
+	
 	/* USB CDC LC */
 	ud->usb_lc.bit_rate = DEF_BIT_RATE;
 	ud->usb_lc.data_bits = DEF_DATA_BITS;
@@ -277,6 +356,9 @@ void init_uart_data(uint8_t itf)
 	/* Buffer */
 	ud->uart_pos = 0;
 	ud->usb_pos = 0;
+	
+	/* echo counter */
+	ud->echo_cnt = 0;
 
 	/* Mutex */
 	mutex_init(&ud->lc_mtx);
@@ -297,18 +379,77 @@ void init_uart_data(uint8_t itf)
 	uart_set_irq_enables(ui->inst, true, false);
 }
 
+
+// Perform initialisation
+int pico_led_init(void) 
+{
+#if defined(PICO_DEFAULT_LED_PIN)
+    // A device like Pico that uses a GPIO for the LED will define PICO_DEFAULT_LED_PIN
+    // so we can use normal GPIO functionality to turn the led on and off
+    gpio_init(PICO_DEFAULT_LED_PIN);
+    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+    return PICO_OK;
+#elif defined(CYW43_WL_GPIO_LED_PIN)
+    // For Pico W devices we need to initialise the driver etc
+    return cyw43_arch_init();
+#endif
+}
+
+// Turn the led on or off
+void pico_set_led(bool led_on) 
+{
+#if defined(PICO_DEFAULT_LED_PIN)
+    // Just set the GPIO on or off
+    gpio_put(PICO_DEFAULT_LED_PIN, led_on);
+#elif defined(CYW43_WL_GPIO_LED_PIN)
+    // Ask the wifi "driver" to set the GPIO on or off
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, led_on);
+#endif
+}
+
+// read usb power
+bool pico_get_vusb(void) 
+{
+#if defined(PICO_DEFAULT_LED_PIN)
+    // Just read GPIO24
+    return gpio_get(24);
+#elif defined(CYW43_WL_GPIO_LED_PIN)
+    // Ask the wifi "driver" to read GPIO02
+    return cyw43_arch_gpio_get(CYW43_WL_GPIO_VBUS_PIN);
+#endif
+}
+
 int main(void)
 {
 	int itf;
+	int rc;
+	
+	// init gpio
+	rc = pico_led_init();
+    hard_assert(rc == PICO_OK);
+    gpio_init(LED_PIN_BLUE);
+	gpio_init(LED_PIN_RED);
+	gpio_init(SW_PIN);
+	gpio_init(ESC_PWR_PIN);
+	// set direction
+	gpio_set_dir(LED_PIN_BLUE, GPIO_OUT);
+	gpio_set_dir(LED_PIN_RED, GPIO_OUT);
+	gpio_set_dir(SW_PIN, GPIO_IN);
+	gpio_set_dir(ESC_PWR_PIN, GPIO_IN);
+	// set outputs
+	gpio_put(LED_PIN_BLUE, 1);
+	gpio_put(LED_PIN_RED, 1);
+	pico_set_led(0);
+	// read inputs 
+	pico_get_vusb();
+	gpio_get(SW_PIN);
+	gpio_get(ESC_PWR_PIN);
 
 	usbd_serial_init();
 
-	for (itf = 0; itf < CFG_TUD_CDC; itf++)
+	for (itf=0;itf<CFG_TUD_CDC;itf++)
 		init_uart_data(itf);
-
-	gpio_init(LED_PIN);
-	gpio_set_dir(LED_PIN, GPIO_OUT);
-
+   
 	multicore_launch_core1(core1_entry);
 
 	while (1) {

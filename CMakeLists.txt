@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: MIT
 
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.17)
+
+set(PICO_BOARD pico_w)
+set(FAMILY pico_w)
 
 include(pico-sdk/pico_sdk_init.cmake)
 
-project(pico_uart_bridge)
+project(usb_uart_bridge VERSION 1.0.0)
 
 pico_sdk_init()
 
@@ -18,6 +21,7 @@ target_link_libraries(uart_bridge
 	hardware_flash
 	pico_multicore
 	pico_stdlib
-	tinyusb_device)
-
+	tinyusb_device
+    pico_cyw43_arch_none)
+    
 pico_add_extra_outputs(uart_bridge)
