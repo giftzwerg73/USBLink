@@ -274,7 +274,7 @@ static inline void uart_read_bytes(uint8_t itf)
 			   }
 		    }
 		}
-        
+
 		mutex_exit(&ud->uart_mtx);
 	}
 }
