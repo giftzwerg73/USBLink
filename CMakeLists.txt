@@ -11,7 +11,7 @@ project(usb_uart_bridge VERSION 1.0.0)
 
 pico_sdk_init()
 
-add_executable(uart_bridge uart-bridge.c usb-descriptors.c)
+add_executable(uart_bridge main.c user_gpio.c uart_bridge.c usb_descriptors.c)
 
 target_include_directories(uart_bridge PUBLIC
 	./

@@ -11,6 +11,8 @@
 #include <pico/stdlib.h>
 #include <string.h>
 #include <tusb.h>
+#include "uart_bridge.h"
+#include "user_gpio.h"
 
 #ifdef CYW43_WL_GPIO_LED_PIN
 #include "pico/cyw43_arch.h"
@@ -20,36 +22,7 @@
 #define MIN(a, b) ((a > b) ? b : a)
 #endif /* MIN */
 
-#define BUFFER_SIZE 2560
-
-#define DEF_BIT_RATE 115200
-#define DEF_STOP_BITS 1
-#define DEF_PARITY 0
-#define DEF_DATA_BITS 8
-
-typedef struct {
-	uart_inst_t *const inst;
-	uint irq;
-	void *irq_fn;
-	uint8_t tx_pin;
-	uint8_t rx_pin;
-    uint8_t invert;
-    uint8_t remove_echo;
-} uart_id_t;
-
-typedef struct {
-	cdc_line_coding_t usb_lc;
-	cdc_line_coding_t uart_lc;
-	mutex_t lc_mtx;
-	uint8_t uart_buffer[BUFFER_SIZE];
-	uint32_t uart_pos;
-	mutex_t uart_mtx;
-	uint8_t usb_buffer[BUFFER_SIZE];
-	uint32_t usb_pos;
-	mutex_t usb_mtx;
-	uint32_t echo_cnt;
-} uart_data_t;
-
+// prototypes
 void uart0_irq_fn(void);
 void uart1_irq_fn(void);
 
@@ -72,11 +45,6 @@ const uart_id_t UART_ID[CFG_TUD_CDC] = {
 		.remove_echo = 0,
 	}
 };
-
-// prototypes
-int pico_led_init(void);
-void pico_set_led(bool led_on);
-bool pico_get_vusb(void);
 
 uart_data_t UART_DATA[CFG_TUD_CDC];
 
@@ -186,6 +154,7 @@ void usb_write_bytes(uint8_t itf)
 	}
 }
 
+// rea/write usb data
 void usb_cdc_process(uint8_t itf)
 {
 	uart_data_t *ud = &UART_DATA[itf];
@@ -196,52 +165,6 @@ void usb_cdc_process(uint8_t itf)
 
 	usb_read_bytes(itf);
 	usb_write_bytes(itf);
-}
-
-void core1_entry(void)
-{
-	int itf;
-	int con[CFG_TUD_CDC];
-	int con_prev[CFG_TUD_CDC];
-	
-	for (itf=0;itf<CFG_TUD_CDC;itf++) 
-	{
-	    con[itf] = 0;
-	    con_prev[itf] = con[itf]; 
-	    if(itf == 0)
-	    {
-	        pico_set_led(con[0]); 
-		}
-    }
-	
-	tusb_init();
-
-	while (1) 
-	{
-		tud_task();
-
-		for (itf=0;itf<CFG_TUD_CDC;itf++) 
-		{
-			if (tud_cdc_n_connected(itf)) 
-			{
-			    con[itf] = 1;
-				usb_cdc_process(itf);
-			}
-			else
-			{
-				con[itf] = 0;
-			}
-			
-			if(con[itf] != con_prev[itf])
-            {   
-				con_prev[itf] = con[itf];
-			    if(itf == 0)
-	            {
-			        pico_set_led(con[itf]); 
-			    }
-		    } 
-		}
-	}
 }
 
 
@@ -282,7 +205,7 @@ static inline void uart_read_bytes(uint8_t itf)
 			   ud->uart_pos++;
 			   if(ui->inst == uart0)
 			   {
-			       gpio_put(LED_PIN_RED, !gpio_get_out_level(LED_PIN_RED));
+			       toggle_red_led();
 			   }
 		    }
 		}
@@ -325,7 +248,7 @@ void uart_write_bytes(uint8_t itf)
 			
 			if(ui->inst == uart0)
 			{
-			    toggle_blue_led();gpio_put(LED_PIN_BLUE, !gpio_get_out_level(LED_PIN_BLUE));
+			    toggle_blue_led();
 			}
 		}
 
