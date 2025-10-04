@@ -50,7 +50,8 @@ uart_data_t UART_DATA[CFG_TUD_CDC];
 
 static inline uint databits_usb2uart(uint8_t data_bits)
 {
-	switch (data_bits) {
+	switch (data_bits) 
+	{
 		case 5:
 			return 5;
 		case 6:
@@ -64,7 +65,8 @@ static inline uint databits_usb2uart(uint8_t data_bits)
 
 static inline uart_parity_t parity_usb2uart(uint8_t usb_parity)
 {
-	switch (usb_parity) {
+	switch (usb_parity) 
+	{
 		case 1:
 			return UART_PARITY_ODD;
 		case 2:
@@ -76,7 +78,8 @@ static inline uart_parity_t parity_usb2uart(uint8_t usb_parity)
 
 static inline uint stopbits_usb2uart(uint8_t stop_bits)
 {
-	switch (stop_bits) {
+	switch (stop_bits) 
+	{
 		case 2:
 			return 2;
 		default:
@@ -114,12 +117,15 @@ void update_uart_cfg(uint8_t itf)
 void usb_read_bytes(uint8_t itf)
 {
 	uart_data_t *ud = &UART_DATA[itf];
-	uint32_t len = tud_cdc_n_available(itf);
-
-	if (len &&
-	    mutex_try_enter(&ud->usb_mtx, NULL)) {
+	uint32_t len;
+	
+	len = tud_cdc_n_available(itf);
+	
+	if (len && mutex_try_enter(&ud->usb_mtx, NULL)) 
+	{
 		len = MIN(len, BUFFER_SIZE - ud->usb_pos);
-		if (len) {
+		if (len) 
+		{
 			uint32_t count;
 
 			count = tud_cdc_n_read(itf, &ud->usb_buffer[ud->usb_pos], len);

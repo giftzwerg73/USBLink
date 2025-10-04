@@ -15,5 +15,6 @@ void toggle_red_led(void);
 bool get_vusb(void);
 bool get_escpower(void); 
 bool get_button(void);
+void setup_sample_button(void);
 
 #endif /* _USER_GPIO_H_ */

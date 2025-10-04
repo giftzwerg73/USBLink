@@ -77,8 +77,11 @@ int main(void)
 	}
    
 	multicore_launch_core1(core1_entry);
+	
+	// setup_sample_button();
 
-	while (1) {
+	while (1) 
+	{
 		for (itf = 0; itf < CFG_TUD_CDC; itf++) 
 		{
 			update_uart_cfg(itf);
