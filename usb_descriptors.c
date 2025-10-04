@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: MIT
 /*
- * Copyright (c) 2021 Álvaro Fernández Rojas <noltari@gmail.com>
- *
- * This file is based on a file originally part of the
- * MicroPython project, http://micropython.org/
- *
- * Copyright (c) 2020 Raspberry Pi (Trading) Ltd.
- * Copyright (c) 2019 Damien P. George
+ * Copyright (c) 2025 Marcus Schuster <ms@nixmail.com>
  */
 
 #include <hardware/flash.h>

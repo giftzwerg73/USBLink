@@ -3,8 +3,6 @@
  * Copyright (c) 2025 Marcus Schuster <ms@nixmail.com>
  */
 
-#include "user_gpio.h"
-
 #include <hardware/irq.h>
 #include <hardware/structs/sio.h>
 #include <hardware/uart.h>
@@ -13,6 +11,7 @@
 #include <string.h>
 
 #include "uart_bridge.h"
+#include "user_gpio.h"
 
 #ifdef CYW43_WL_GPIO_LED_PIN
 #include "pico/cyw43_arch.h"
