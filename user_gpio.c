@@ -3,17 +3,19 @@
  * Copyright (c) 2025 Marcus Schuster <ms@nixmail.com>
  */
 
+#include "user_gpio.h"
+
 #include <hardware/irq.h>
 #include <hardware/structs/sio.h>
 #include <hardware/uart.h>
 #include <pico/multicore.h>
 #include <pico/stdlib.h>
 #include <string.h>
-#include "user_gpio.h"
+
 #include "uart_bridge.h"
- 
+
 #ifdef CYW43_WL_GPIO_LED_PIN
-    #include "pico/cyw43_arch.h"
+#include "pico/cyw43_arch.h"
 #endif
 
 // pin definition
@@ -23,14 +25,12 @@
 #define LED_PIN_RED 17
 
 // input variable
-static uint8_t btn[2];
-static uint8_t vusb[2];
-static uint8_t escpwr[2];
-
+static uint8_t btn[3];
+static uint8_t vusb[3];
+static uint8_t escpwr[3];
 
 // read usb power
-inline bool get_vusb(void) 
-{
+inline bool get_vusb(void) {
 #if defined(PICO_DEFAULT_LED_PIN)
     // Just read GPIO24
     return gpio_get(24);
@@ -41,20 +41,13 @@ inline bool get_vusb(void)
 }
 
 // read esc power
-inline bool get_escpower(void) 
-{
-    return gpio_get(ESC_PWR_PIN);
-}
+inline bool get_escpower(void) { return gpio_get(ESC_PWR_PIN); }
 
 // read button
-inline bool get_button(void) 
-{
-    return gpio_get(SW_PIN);
-}
+inline bool get_button(void) { return gpio_get(SW_PIN); }
 
 // turn onboard led on or off
-inline void set_onboard_led(bool led_on) 
-{
+inline void set_onboard_led(bool led_on) {
 #if defined(PICO_DEFAULT_LED_PIN)
     // Just set the GPIO on or off
     gpio_put(PICO_DEFAULT_LED_PIN, led_on);
@@ -65,32 +58,19 @@ inline void set_onboard_led(bool led_on)
 }
 
 // set blue led on or off
-inline void set_blue_led(bool led_on)
-{
-	gpio_put(LED_PIN_BLUE, led_on);
-}
+inline void set_blue_led(bool led_on) { gpio_put(LED_PIN_BLUE, led_on); }
 
 // set red led on or off
-inline void set_red_led(bool led_on)
-{
-	gpio_put(LED_PIN_RED, led_on);
-}
+inline void set_red_led(bool led_on) { gpio_put(LED_PIN_RED, led_on); }
 
 // toggle blue led
-inline void toggle_blue_led(void)
-{
-	gpio_put(LED_PIN_BLUE, !gpio_get_out_level(LED_PIN_BLUE));
-}
+inline void toggle_blue_led(void) { gpio_put(LED_PIN_BLUE, !gpio_get_out_level(LED_PIN_BLUE)); }
 
 // toggle red led
-inline void toggle_red_led(void)
-{
-	gpio_put(LED_PIN_RED, !gpio_get_out_level(LED_PIN_RED));
-}
+inline void toggle_red_led(void) { gpio_put(LED_PIN_RED, !gpio_get_out_level(LED_PIN_RED)); }
 
 // initialise onboard led
-static inline int onboard_led_init(void) 
-{
+static inline int onboard_led_init(void) {
 #if defined(PICO_DEFAULT_LED_PIN)
     // A device like Pico that uses a GPIO for the LED will define PICO_DEFAULT_LED_PIN
     // so we can use normal GPIO functionality to turn the led on and off
@@ -104,46 +84,55 @@ static inline int onboard_led_init(void)
 }
 
 // initialise gpio
-void init_gpio(void)
-{
+void init_gpio(void) {
     int rc;
-	
-	// init gpio
-	rc = onboard_led_init();
+
+    // init gpio
+    rc = onboard_led_init();
     hard_assert(rc == PICO_OK);
     gpio_init(LED_PIN_BLUE);
-	gpio_init(LED_PIN_RED);
-	gpio_init(SW_PIN);
-	gpio_init(ESC_PWR_PIN);
-	// set direction
-	gpio_set_dir(LED_PIN_BLUE, GPIO_OUT);
-	gpio_set_dir(LED_PIN_RED, GPIO_OUT);
-	gpio_set_dir(SW_PIN, GPIO_IN);
-	gpio_set_dir(ESC_PWR_PIN, GPIO_IN);
-	// set leds
-	set_blue_led(1);
-	set_red_led(1);
-	set_onboard_led(0);
-	// read inputs 
-	vusb[0] = vusb[1] = get_vusb();
-	btn[0] = btn[1] = get_button();
-	escpwr[0] = escpwr[1] = get_escpower();
+    gpio_init(LED_PIN_RED);
+    gpio_init(SW_PIN);
+    gpio_init(ESC_PWR_PIN);
+    // set direction
+    gpio_set_dir(LED_PIN_BLUE, GPIO_OUT);
+    gpio_set_dir(LED_PIN_RED, GPIO_OUT);
+    gpio_set_dir(SW_PIN, GPIO_IN);
+    gpio_set_dir(ESC_PWR_PIN, GPIO_IN);
+    // set leds
+    set_blue_led(1);
+    set_red_led(1);
+    set_onboard_led(0);
+    // read inputs
+    vusb[0] = vusb[1] = vusb[2] = get_vusb();
+    escpwr[0] = escpwr[1] = escpwr[2] = get_escpower();
+    btn[0] = btn[1] = get_button();
+    btn[2] = 255;
 }
 
 // sample button
-bool sample_button (void)
-{
-    btn[0] = gpio_get(SW_PIN);
-    if(btn[0] == 0 && btn[1] == 1)
-	{
-		btn[1] = btn[0];
-		dbg_print_usb(1, "Button pressed\n");
-	}
-	else if(btn[0] == 1 && btn[1] == 0)
-	{
-		btn[1] = btn[0];
-		dbg_print_usb(1, "Button released\n");
-	}
-    return true;
+void sample_button(void) {
+    btn[0] = (uint8_t)get_button();
+    if (btn[0] == 0 && btn[1] == 1) {
+        btn[1] = btn[0];
+        dbg_print_usb(1, "Button pressed\n");
+        btn[2] = 1;
+    } else if (btn[0] == 1 && btn[1] == 0) {
+        btn[1] = btn[0];
+        dbg_print_usb(1, "Button released\n");
+        btn[2] = 0;
+    }
 }
 
+// sample esc power
+void sample_escpwr(void) {
+    escpwr[0] = (uint8_t)get_escpower();
+    escpwr[2] = escpwr[0];
+    if (escpwr[0] == 0 && escpwr[1] == 1) {
+        escpwr[1] = escpwr[0];
+        dbg_print_usb(1, "ESC_POWER_DOWN\n");
+    } else if (escpwr[0] == 1 && escpwr[1] == 0) {
+        escpwr[1] = escpwr[0];
+        dbg_print_usb(1, "ESC_POWER_UP\n");
+    }
+}
