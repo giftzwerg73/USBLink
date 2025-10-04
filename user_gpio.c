@@ -130,8 +130,8 @@ void init_gpio(void)
 	escpwr[0] = escpwr[1] = get_escpower();
 }
 
-// sample button as periodic function
-bool sample_button (struct repeating_timer *t)
+// sample button
+bool sample_button (void)
 {
     btn[0] = gpio_get(SW_PIN);
     if(btn[0] == 0 && btn[1] == 1)
@@ -147,12 +147,3 @@ bool sample_button (struct repeating_timer *t)
     return true;
 }
 
-// start sampling button gpio
-void setup_sample_button(void) 
-{
-    struct repeating_timer timer;
-
-    // NB: A negative period means "start to start" - i.e. regardless of how long the callback takes to run
-    long usPeriod = -1000000/32000;
-    add_repeating_timer_us(usPeriod, sample_button, NULL, &timer); 
-}

@@ -78,8 +78,6 @@ int main(void)
    
 	multicore_launch_core1(core1_entry);
 	
-	// setup_sample_button();
-
 	while (1) 
 	{
 		for (itf = 0; itf < CFG_TUD_CDC; itf++) 
@@ -87,6 +85,8 @@ int main(void)
 			update_uart_cfg(itf);
 			uart_write_bytes(itf);
 		}
+		
+		sample_button();
 	}
 
 	return 0;
