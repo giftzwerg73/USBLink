@@ -17,5 +17,7 @@ bool get_escpower(void);
 bool get_button(void);
 void sample_button(void);
 void sample_escpwr(void);
+uint8_t get_button_state(void);
+uint8_t get_escpwr_state(void);
 
 #endif /* _USER_GPIO_H_ */

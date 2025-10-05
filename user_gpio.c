@@ -3,6 +3,7 @@
  * Copyright (c) 2025 Marcus Schuster <ms@nixmail.com>
  */
 
+
 #include <hardware/irq.h>
 #include <hardware/structs/sio.h>
 #include <hardware/uart.h>
@@ -29,7 +30,8 @@ static uint8_t vusb[3];
 static uint8_t escpwr[3];
 
 // read usb power
-inline bool get_vusb(void) {
+inline bool get_vusb(void) 
+{
 #if defined(PICO_DEFAULT_LED_PIN)
     // Just read GPIO24
     return gpio_get(24);
@@ -40,13 +42,20 @@ inline bool get_vusb(void) {
 }
 
 // read esc power
-inline bool get_escpower(void) { return gpio_get(ESC_PWR_PIN); }
+inline bool get_escpower(void) 
+{ 
+	return gpio_get(ESC_PWR_PIN); 
+}
 
 // read button
-inline bool get_button(void) { return gpio_get(SW_PIN); }
+inline bool get_button(void) 
+{ 
+	return gpio_get(SW_PIN); 
+}
 
 // turn onboard led on or off
-inline void set_onboard_led(bool led_on) {
+inline void set_onboard_led(bool led_on) 
+{
 #if defined(PICO_DEFAULT_LED_PIN)
     // Just set the GPIO on or off
     gpio_put(PICO_DEFAULT_LED_PIN, led_on);
@@ -57,19 +66,32 @@ inline void set_onboard_led(bool led_on) {
 }
 
 // set blue led on or off
-inline void set_blue_led(bool led_on) { gpio_put(LED_PIN_BLUE, led_on); }
+inline void set_blue_led(bool led_on) 
+{ 
+	gpio_put(LED_PIN_BLUE, led_on); 
+}
 
 // set red led on or off
-inline void set_red_led(bool led_on) { gpio_put(LED_PIN_RED, led_on); }
+inline void set_red_led(bool led_on) 
+{ 
+	gpio_put(LED_PIN_RED, led_on); 
+}
 
 // toggle blue led
-inline void toggle_blue_led(void) { gpio_put(LED_PIN_BLUE, !gpio_get_out_level(LED_PIN_BLUE)); }
+inline void toggle_blue_led(void) 
+{ 
+	gpio_put(LED_PIN_BLUE, !gpio_get_out_level(LED_PIN_BLUE)); 
+}
 
 // toggle red led
-inline void toggle_red_led(void) { gpio_put(LED_PIN_RED, !gpio_get_out_level(LED_PIN_RED)); }
+inline void toggle_red_led(void) 
+{ 
+	gpio_put(LED_PIN_RED, !gpio_get_out_level(LED_PIN_RED)); 
+}
 
 // initialise onboard led
-static inline int onboard_led_init(void) {
+static inline int onboard_led_init(void) 
+{
 #if defined(PICO_DEFAULT_LED_PIN)
     // A device like Pico that uses a GPIO for the LED will define PICO_DEFAULT_LED_PIN
     // so we can use normal GPIO functionality to turn the led on and off
@@ -83,7 +105,8 @@ static inline int onboard_led_init(void) {
 }
 
 // initialise gpio
-void init_gpio(void) {
+void init_gpio(void) 
+{
     int rc;
 
     // init gpio
@@ -104,19 +127,24 @@ void init_gpio(void) {
     set_onboard_led(0);
     // read inputs
     vusb[0] = vusb[1] = vusb[2] = get_vusb();
-    escpwr[0] = escpwr[1] = escpwr[2] = get_escpower();
+    escpwr[0] = escpwr[1] = get_escpower();
+    escpwr[2] = 255;
     btn[0] = btn[1] = get_button();
     btn[2] = 255;
 }
 
 // sample button
-void sample_button(void) {
+void sample_button(void) 
+{
     btn[0] = (uint8_t)get_button();
-    if (btn[0] == 0 && btn[1] == 1) {
+    if (btn[0] == 0 && btn[1] == 1) 
+    {
         btn[1] = btn[0];
         dbg_print_usb(1, "Button pressed\n");
         btn[2] = 1;
-    } else if (btn[0] == 1 && btn[1] == 0) {
+    } 
+    else if (btn[0] == 1 && btn[1] == 0) 
+    {
         btn[1] = btn[0];
         dbg_print_usb(1, "Button released\n");
         btn[2] = 0;
@@ -124,14 +152,32 @@ void sample_button(void) {
 }
 
 // sample esc power
-void sample_escpwr(void) {
+void sample_escpwr(void) 
+{
     escpwr[0] = (uint8_t)get_escpower();
     escpwr[2] = escpwr[0];
-    if (escpwr[0] == 0 && escpwr[1] == 1) {
+    if (escpwr[0] == 0 && escpwr[1] == 1) 
+    {
         escpwr[1] = escpwr[0];
         dbg_print_usb(1, "ESC_POWER_DOWN\n");
-    } else if (escpwr[0] == 1 && escpwr[1] == 0) {
+        escpwr[2] = 0;
+    } 
+    else if (escpwr[0] == 1 && escpwr[1] == 0) 
+    {
         escpwr[1] = escpwr[0];
         dbg_print_usb(1, "ESC_POWER_UP\n");
+        escpwr[2] = 1;
     }
+}
+
+// get state of button 1=presses 0=relesed 255=unknown
+uint8_t get_button_state(void) 
+{ 
+	return btn[2]; 
+}
+
+// get state of esc power 1=power-up 0=power-down 255=unknown
+uint8_t get_escpwr_state(void) 
+{ 
+	return escpwr[2]; 
 }
