@@ -59,11 +59,11 @@ static const uint8_t usbd_desc_cfg[USBD_DESC_LEN] = {
                           USBD_DESC_LEN, TUSB_DESC_CONFIG_ATT_REMOTE_WAKEUP,
                           USBD_MAX_POWER_MA),
 
-    TUD_CDC_DESCRIPTOR(USBD_ITF_CDC_0, USBD_STR_CDC, USBD_CDC_0_EP_CMD, 
+    TUD_CDC_DESCRIPTOR(USBD_ITF_CDC_0, USBD_STR_CDC, USBD_CDC_0_EP_CMD,
                        USBD_CDC_CMD_MAX_SIZE, USBD_CDC_0_EP_OUT,
                        USBD_CDC_0_EP_IN, USBD_CDC_IN_OUT_MAX_SIZE),
 
-    TUD_CDC_DESCRIPTOR(USBD_ITF_CDC_1, USBD_STR_CDC, USBD_CDC_1_EP_CMD, 
+    TUD_CDC_DESCRIPTOR(USBD_ITF_CDC_1, USBD_STR_CDC, USBD_CDC_1_EP_CMD,
                        USBD_CDC_CMD_MAX_SIZE, USBD_CDC_1_EP_OUT,
                        USBD_CDC_1_EP_IN, USBD_CDC_IN_OUT_MAX_SIZE),
 };
@@ -77,38 +77,38 @@ static const char *const usbd_desc_str[] = {
     [USBD_STR_CDC] = "Board CDC",
 };
 
-const uint8_t *tud_descriptor_device_cb(void) 
-{ 
-	return (const uint8_t *)&usbd_desc_device; 
+const uint8_t *tud_descriptor_device_cb(void)
+{
+    return (const uint8_t *)&usbd_desc_device;
 }
 
-const uint8_t *tud_descriptor_configuration_cb(uint8_t index) 
-{ 
-	return usbd_desc_cfg; 
+const uint8_t *tud_descriptor_configuration_cb(uint8_t index)
+{
+    return usbd_desc_cfg;
 }
 
-const uint16_t *tud_descriptor_string_cb(uint8_t index, uint16_t langid) 
+const uint16_t *tud_descriptor_string_cb(uint8_t index, uint16_t langid)
 {
     static uint16_t desc_str[DESC_STR_MAX];
     uint8_t len;
 
-    if (index == 0) 
+    if (index == 0)
     {
         desc_str[1] = 0x0409;
         len = 1;
-    } 
-    else 
+    }
+    else
     {
         const char *str;
         char serial[USBD_STR_SERIAL_LEN];
 
         if (index >= sizeof(usbd_desc_str) / sizeof(usbd_desc_str[0]))
         {
-			 return NULL;
-		}
+            return NULL;
+        }
 
         str = usbd_desc_str[index];
-        for (len = 0; len < DESC_STR_MAX - 1 && str[len]; ++len) 
+        for (len = 0; len < DESC_STR_MAX - 1 && str[len]; ++len)
         {
             desc_str[1 + len] = str[len];
         }
@@ -119,13 +119,13 @@ const uint16_t *tud_descriptor_string_cb(uint8_t index, uint16_t langid)
     return desc_str;
 }
 
-void usbd_serial_init(void) 
+void usbd_serial_init(void)
 {
     uint8_t id[8];
 
     flash_get_unique_id(id);
 
-    snprintf(usbd_serial, USBD_STR_SERIAL_LEN, 
-             "%02X%02X%02X%02X%02X%02X%02X%02X", id[0], id[1], id[2], 
+    snprintf(usbd_serial, USBD_STR_SERIAL_LEN,
+             "%02X%02X%02X%02X%02X%02X%02X%02X", id[0], id[1], id[2],
              id[3], id[4], id[5], id[6], id[7]);
 }

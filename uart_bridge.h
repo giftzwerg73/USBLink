@@ -15,7 +15,8 @@
 #define DEF_PARITY 0
 #define DEF_DATA_BITS 8
 
-typedef struct {
+typedef struct
+{
     uart_inst_t *const inst;
     uint irq;
     void *irq_fn;
@@ -25,7 +26,8 @@ typedef struct {
     uint8_t remove_echo;
 } uart_id_t;
 
-typedef struct {
+typedef struct
+{
     cdc_line_coding_t usb_lc;
     cdc_line_coding_t uart_lc;
     mutex_t lc_mtx;
