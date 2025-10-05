@@ -89,7 +89,8 @@ static inline uint stopbits_usb2uart(uint8_t stop_bits)
     }
 }
 
-void update_uart_cfg(uint8_t itf) {
+void update_uart_cfg(uint8_t itf) 
+{
     const uart_id_t *ui = &UART_ID[itf];
     uart_data_t *ud = &UART_DATA[itf];
 
