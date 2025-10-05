@@ -52,7 +52,8 @@ void core1_entry(void)
             {
                 con[itf][0] = 1;
                 usb_cdc_process(itf);
-            } else 
+            } 
+            else 
             {
                 con[itf][0] = 0;
             }

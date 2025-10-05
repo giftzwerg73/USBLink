@@ -259,8 +259,7 @@ void uart_write_bytes(uint8_t itf)
 
         if (count < ud->usb_pos) 
         {
-            memmove(ud->usb_buffer, 
-                    &ud->usb_buffer[count], 
+            memmove(ud->usb_buffer, &ud->usb_buffer[count], 
                     ud->usb_pos -= count);
         }
         ud->usb_pos -= count;
