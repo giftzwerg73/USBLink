@@ -28,17 +28,7 @@ bool repeating_timer_callback(__unused struct repeating_timer *t)
 void core1_entry(void)
 {
     int itf;
-    int con[CFG_TUD_CDC][2];
-
-    for (itf = 0; itf < CFG_TUD_CDC; itf++)
-    {
-        con[itf][0] = 0;
-        con[itf][1] = con[itf][0];
-        if (itf == 0)
-        {
-            set_onboard_led(con[itf][0]);
-        }
-    }
+    int con;
 
     tusb_init();
 
@@ -48,23 +38,20 @@ void core1_entry(void)
 
         for (itf = 0; itf < CFG_TUD_CDC; itf++)
         {
+            con = 0;
             if (tud_cdc_n_connected(itf))
             {
-                con[itf][0] = 1;
+                con = 1;
                 usb_cdc_process(itf);
             }
-            else
-            {
-                con[itf][0] = 0;
-            }
 
-            if (con[itf][0] != con[itf][1])
+            if (itf == 0)
             {
-                con[itf][1] = con[itf][0];
-                if (itf == 0)
-                {
-                    set_onboard_led(con[itf][0]);
-                }
+                gpio_put(LED_PIN_RED, con);
+            }
+            else if (itf == 1)
+            {
+                gpio_put(LED_PIN_BLUE, con);
             }
         }
     }

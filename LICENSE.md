@@ -1,7 +1,7 @@
 The MIT License (MIT)
 =====================
 
-Copyright © 2021 Álvaro Fernández Rojas <noltari@gmail.com>
+Copyright © 2025 Marcus Schuster <ms@nixmail.com>
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation

@@ -6,6 +6,12 @@
 #if !defined(_USER_GPIO_H_)
 #define _USER_GPIO_H_
 
+// pin definition
+#define ESC_PWR_PIN 2
+#define SW_PIN 15
+#define LED_PIN_BLUE 16
+#define LED_PIN_RED 17
+
 void init_gpio(void);
 void set_onboard_led(bool led_on);
 void set_blue_led(bool led_on);

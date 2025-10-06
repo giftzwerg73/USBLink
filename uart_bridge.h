@@ -22,8 +22,6 @@ typedef struct
     void *irq_fn;
     uint8_t tx_pin;
     uint8_t rx_pin;
-    uint8_t invert;
-    uint8_t remove_echo;
 } uart_id_t;
 
 typedef struct

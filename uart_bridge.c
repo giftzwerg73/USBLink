@@ -34,8 +34,6 @@ const uart_id_t UART_ID[CFG_TUD_CDC] = {
         .irq_fn = &uart0_irq_fn,
         .tx_pin = 12,
         .rx_pin = 13,
-        .invert = 1,
-        .remove_echo = 1,
     },
     {
         .inst = uart1,
@@ -43,8 +41,6 @@ const uart_id_t UART_ID[CFG_TUD_CDC] = {
         .irq_fn = &uart1_irq_fn,
         .tx_pin = 4,
         .rx_pin = 5,
-        .invert = 0,
-        .remove_echo = 0,
     }
 };
 
@@ -178,6 +174,7 @@ void usb_cdc_process(uint8_t itf)
 
 inline void dbg_print_usb(uint8_t itf, const char *msg)
 {
+
     uart_data_t *ud = &UART_DATA[itf];
 
     mutex_enter_blocking(&ud->uart_mtx);
@@ -187,6 +184,18 @@ inline void dbg_print_usb(uint8_t itf, const char *msg)
         ud->uart_buffer[ud->uart_pos] = *msg++;
         ud->uart_pos++;
     }
+
+    mutex_exit(&ud->uart_mtx);
+}
+
+inline void dbg_putc_usb(uint8_t itf, uint8_t data)
+{
+    uart_data_t *ud = &UART_DATA[itf];
+
+    mutex_enter_blocking(&ud->uart_mtx);
+
+    ud->uart_buffer[ud->uart_pos] = data;
+    ud->uart_pos++;
 
     mutex_exit(&ud->uart_mtx);
 }
@@ -202,20 +211,8 @@ static inline void uart_read_bytes(uint8_t itf)
 
         while (uart_is_readable(ui->inst) && (ud->uart_pos < BUFFER_SIZE))
         {
-            if (ud->pending_echo_bytes > 0)
-            {
-                (void)uart_getc(ui->inst);
-                ud->pending_echo_bytes--;
-            }
-            else
-            {
-                ud->uart_buffer[ud->uart_pos] = uart_getc(ui->inst);
-                ud->uart_pos++;
-                if (ui->inst == uart0)
-                {
-                    toggle_red_led();
-                }
-            }
+            ud->uart_buffer[ud->uart_pos] = uart_getc(ui->inst);
+            ud->uart_pos++;
         }
 
         mutex_exit(&ud->uart_mtx);
@@ -243,27 +240,14 @@ void uart_write_bytes(uint8_t itf)
 
         while (uart_is_writable(ui->inst) && count < ud->usb_pos)
         {
-            if (ui->remove_echo)
-            {
-                ud->pending_echo_bytes++;
-            }
-            else
-            {
-                ud->pending_echo_bytes = 0;
-            }
             uart_putc_raw(ui->inst, ud->usb_buffer[count]);
             count++;
-
-            if (ui->inst == uart0)
-            {
-                toggle_blue_led();
-            }
         }
 
         if (count < ud->usb_pos)
         {
             memmove(ud->usb_buffer, &ud->usb_buffer[count],
-                    ud->usb_pos -= count);
+                    ud->usb_pos - count);
         }
         ud->usb_pos -= count;
         mutex_exit(&ud->usb_mtx);
@@ -278,11 +262,17 @@ void init_uart_data(uint8_t itf)
     /* Pinmux */
     gpio_set_function(ui->tx_pin, GPIO_FUNC_UART);
     gpio_set_function(ui->rx_pin, GPIO_FUNC_UART);
-    gpio_set_pulls(ui->rx_pin, true, false);
-    if (ui->invert)
+    if (itf == 0)
     {
+        // enable pullup and invert rx and tx
+        gpio_set_pulls(ui->rx_pin, true, false);
         gpio_set_outover(ui->tx_pin, GPIO_OVERRIDE_INVERT);
         gpio_set_inover(ui->rx_pin, GPIO_OVERRIDE_INVERT);
+    }
+    else if (itf == 1)
+    {
+        // enable pulldown
+        gpio_set_pulls(ui->rx_pin, false, true);
     }
 
     /* USB CDC LC */
@@ -300,9 +290,6 @@ void init_uart_data(uint8_t itf)
     /* Buffer */
     ud->uart_pos = 0;
     ud->usb_pos = 0;
-
-    /* echo counter */
-    ud->pending_echo_bytes = 0;
 
     /* Mutex */
     mutex_init(&ud->lc_mtx);

@@ -18,12 +18,6 @@
 #include "pico/cyw43_arch.h"
 #endif
 
-// pin definition
-#define ESC_PWR_PIN 2
-#define SW_PIN 15
-#define LED_PIN_BLUE 16
-#define LED_PIN_RED 17
-
 // input variable
 static uint8_t btn[3];
 static uint8_t vusb[3];
@@ -121,10 +115,10 @@ void init_gpio(void)
     gpio_set_dir(LED_PIN_RED, GPIO_OUT);
     gpio_set_dir(SW_PIN, GPIO_IN);
     gpio_set_dir(ESC_PWR_PIN, GPIO_IN);
-    // set leds
-    set_blue_led(1);
-    set_red_led(1);
-    set_onboard_led(0);
+    // set leds blue and red off green on
+    set_blue_led(0);
+    set_red_led(0);
+    set_onboard_led(1);
     // read inputs
     vusb[0] = vusb[1] = vusb[2] = get_vusb();
     escpwr[0] = escpwr[1] = get_escpower();
