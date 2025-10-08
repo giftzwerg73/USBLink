@@ -11,6 +11,9 @@
 #define SW_PIN 15
 #define LED_PIN_BLUE 16
 #define LED_PIN_RED 17
+// pins for receiver and servo mode
+#define RECV_CH1_PIN 13
+#define SERV_CH1_PIN 12
 
 void init_gpio(void);
 void set_onboard_led(bool led_on);
@@ -25,5 +28,6 @@ void sample_button(void);
 void sample_escpwr(void);
 uint8_t get_button_state(void);
 uint8_t get_escpwr_state(void);
+uint8_t opmode_select(void);
 
 #endif /* _USER_GPIO_H_ */

@@ -11,7 +11,7 @@ project(USBLink VERSION 1.0.0)
 
 pico_sdk_init()
 
-add_executable(USBLink main.c user_gpio.c uart_bridge.c usb_descriptors.c)
+add_executable(USBLink main.c user_gpio.c uart_bridge.c usb_descriptors.c rc.c)
 
 target_include_directories(USBLink PUBLIC
 	./
@@ -19,6 +19,7 @@ target_include_directories(USBLink PUBLIC
 
 target_link_libraries(USBLink
 	hardware_flash
+	hardware_pwm
 	pico_multicore
 	pico_stdlib
 	tinyusb_device

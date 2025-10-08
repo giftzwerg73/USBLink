@@ -42,6 +42,8 @@ void init_uart_data(uint8_t itf);
 void usb_cdc_process(uint8_t itf);
 void update_uart_cfg(uint8_t itf);
 void uart_write_bytes(uint8_t itf);
-void dbg_print_usb(uint8_t itf, const char *msg);
+void dbg_print_usb(uint8_t itf, uint8_t *msg);
+void dbg_putc_usb(uint8_t itf, uint8_t data);
+void dbg_read_usb(uint8_t itf, uint8_t *msg);
 
 #endif /* _UART_BRIDGE_H_ */

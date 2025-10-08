@@ -172,7 +172,7 @@ void usb_cdc_process(uint8_t itf)
     usb_write_bytes(itf);
 }
 
-inline void dbg_print_usb(uint8_t itf, const char *msg)
+inline void dbg_print_usb(uint8_t itf, uint8_t *msg)
 {
 
     uart_data_t *ud = &UART_DATA[itf];
@@ -227,6 +227,30 @@ void uart0_irq_fn(void)
 void uart1_irq_fn(void)
 {
     uart_read_bytes(1);
+}
+
+inline void dbg_read_usb(uint8_t itf, uint8_t *msg)
+{
+    uart_data_t *ud = &UART_DATA[itf];
+
+    if (ud->usb_pos && mutex_try_enter(&ud->usb_mtx, NULL))
+    {
+        uint32_t count = 0;
+
+        while (count < ud->usb_pos)
+        {
+            *msg++ = ud->usb_buffer[count];
+            count++;
+        }
+
+        if (count < ud->usb_pos)
+        {
+            memmove(ud->usb_buffer, &ud->usb_buffer[count],
+                    ud->usb_pos - count);
+        }
+        ud->usb_pos -= count;
+        mutex_exit(&ud->usb_mtx);
+    }
 }
 
 void uart_write_bytes(uint8_t itf)

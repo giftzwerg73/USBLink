@@ -175,3 +175,42 @@ uint8_t get_escpwr_state(void)
 {
     return escpwr[2];
 }
+
+// check button at start up to define mode
+uint8_t opmode_select(void)
+{
+    uint32_t x;
+    uint8_t ret;
+
+    set_blue_led(0);
+    set_red_led(0);
+    ret = 0;
+    x = 0;
+    while (get_button() == 0 && get_button() == 0 && get_button() == 0)
+    {
+        x++;
+
+        if (x == 1000 * 100)
+        {
+            set_blue_led(0);
+            set_red_led(1);
+            ret = 1;
+        }
+        else if (x == 2000 * 100)
+        {
+            set_blue_led(1);
+            set_red_led(1);
+            ret = 2;
+        }
+        else if (x >= 3000 * 100)
+        {
+            set_blue_led(0);
+            set_red_led(0);
+            ret = 0;
+            x = 0;
+        }
+        sleep_us(10);
+    }
+
+    return ret;
+}
