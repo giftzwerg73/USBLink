@@ -102,24 +102,24 @@ int main(void)
             update_uart_cfg();
             uart_write_bytes();
             escpower = ceck_escpwr();
-            
-            if(escpower == 0)
+
+            if (escpower == 0)
             {
-				escpower_cnt++;
-				if (escpower_cnt > msgupdatetime)
+                escpower_cnt++;
+                if (escpower_cnt > msgupdatetime)
                 {
-					dbg_print_usb("Switch power on\n");
-				    escpower_cnt = 0;
-				}
-			}
+                    dbg_print_usb("Switch power on\n");
+                    escpower_cnt = 0;
+                }
+            }
 
             sleep_us(looptime);
             if (check_button_event() == bt_evtup_long)
             {
-				if(escpower == 0)
-				{
+                if (escpower == 0)
+                {
                     dbg_print_usb("Going down esc progrmmer\n");
-			    }
+                }
                 trigger_reset();
             }
         }
@@ -182,7 +182,7 @@ int main(void)
                     }
                     else
                     {
-						dbg_print_usb("Power is off\n");
+                        dbg_print_usb("Power is off\n");
                         escpower_cnt = 0;
                         state = 4;
                     }
@@ -342,7 +342,7 @@ int main(void)
                     }
                     else
                     {
-						dbg_print_usb("Power is off\n");
+                        dbg_print_usb("Power is off\n");
                         escpower_cnt = 0;
                         state = 4;
                     }
