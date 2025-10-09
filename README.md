@@ -15,5 +15,5 @@ Raspberry Pi Pico Pinout
 |:----------------------:|:--------:|
 | GPIO12 (Pin 16)        | UART0 TX |
 | GPIO13 (Pin 17)        | UART0 RX |
-| GPIO4 (Pin 6)          | UART1 TX |
-| GPIO5 (Pin 7)          | UART1 RX |
+
+Signals TX and RX are connected through open-collector buffers (inverting) to the OneWire Signal.
