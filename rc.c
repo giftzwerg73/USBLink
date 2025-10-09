@@ -185,6 +185,8 @@ rc_servo rc_servo_init(uint pin)
     pwm_config_set_wrap(&config, 20000);
     // Load the configuration into our PWM slice, and set it running.
     pwm_init(s.slice_num, &config, false);
+    // invert pwm on pin
+    pwm_set_output_polarity(s.slice_num, true, true);
     // pwm will be started by calling pwm_set_enabled later
 
     return s;
@@ -270,12 +272,12 @@ static void rc_isr_internal(uint pin_index, uint32_t events)
 {
     uint64_t now = to_us_since_boot(get_absolute_time());
 
-    if (events & EVENT_EDGE_RISE)
+    if (events & EVENT_EDGE_FALL)
     {
         gRcInputChannels[pin_index].pulse_start = now;
     }
 
-    if (events & EVENT_EDGE_FALL)
+    if (events & EVENT_EDGE_RISE)
     {
         if (gRcInputChannels[pin_index].pulse_start > 0)
         {
