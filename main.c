@@ -179,7 +179,7 @@ int main(void)
                         {
                             // Read input from RC receiver - that is pulse width on input pin.
                             pulse = rc_get_input_pulse_width(RECV_CH1_PIN);
-                            sprintf(print_buf, "Pulse ch1= %lu\n", pulse);
+                            sprintf(print_buf, "Pulse ch1 = %lu\n", pulse);
                             dbg_print_usb(print_buf);
                             escpower_cnt = 0;
                         }
@@ -339,7 +339,7 @@ int main(void)
                         {
                             // Read input from RC receiver - that is pulse width on input pin.
                             pulse = rc_get_input_pulse_width(RECV_CH1_PIN);
-                            sprintf(print_buf, "Pulse ch1= %lu\n", pulse);
+                            sprintf(print_buf, "Pulse ch1 = %lu\n", pulse);
                             dbg_print_usb(print_buf);
                         }
 
