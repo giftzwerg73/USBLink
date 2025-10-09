@@ -14,6 +14,19 @@
 // pins for receiver and servo mode
 #define RECV_CH1_PIN 13
 #define SERV_CH1_PIN 12
+// defines for button_events
+#define bt_undev 0
+#define bt_up 1
+#define bt_evtdown 2
+#define bt_down 3
+#define bt_evtup 4
+#define bt_evtup_short 5
+#define bt_evtup_long 6
+// define operating modes
+#define opmode_undev 0
+#define opmode_esc 1
+#define opmode_rec 2
+#define opmode_servo 3
 
 void init_gpio(void);
 void set_onboard_led(bool led_on);
@@ -24,10 +37,12 @@ void toggle_red_led(void);
 bool get_vusb(void);
 bool get_escpower(void);
 bool get_button(void);
-void sample_button(void);
-void sample_escpwr(void);
 uint8_t get_button_state(void);
 uint8_t get_escpwr_state(void);
 uint8_t opmode_select(void);
+bool ceck_escpwr(void);
+uint8_t check_button_event(void);
+void trigger_reset(void);
+void sleep_x10ms(uint32_t wait);
 
 #endif /* _USER_GPIO_H_ */

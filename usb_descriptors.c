@@ -19,13 +19,10 @@
 #define USBD_ITF_MAX 4
 
 #define USBD_CDC_0_EP_CMD 0x81
-#define USBD_CDC_1_EP_CMD 0x83
 
 #define USBD_CDC_0_EP_OUT 0x01
-#define USBD_CDC_1_EP_OUT 0x03
 
 #define USBD_CDC_0_EP_IN 0x82
-#define USBD_CDC_1_EP_IN 0x84
 
 #define USBD_CDC_CMD_MAX_SIZE 8
 #define USBD_CDC_IN_OUT_MAX_SIZE 64
@@ -62,10 +59,6 @@ static const uint8_t usbd_desc_cfg[USBD_DESC_LEN] = {
     TUD_CDC_DESCRIPTOR(USBD_ITF_CDC_0, USBD_STR_CDC, USBD_CDC_0_EP_CMD,
                        USBD_CDC_CMD_MAX_SIZE, USBD_CDC_0_EP_OUT,
                        USBD_CDC_0_EP_IN, USBD_CDC_IN_OUT_MAX_SIZE),
-
-    TUD_CDC_DESCRIPTOR(USBD_ITF_CDC_1, USBD_STR_CDC, USBD_CDC_1_EP_CMD,
-                       USBD_CDC_CMD_MAX_SIZE, USBD_CDC_1_EP_OUT,
-                       USBD_CDC_1_EP_IN, USBD_CDC_IN_OUT_MAX_SIZE),
 };
 
 static char usbd_serial[USBD_STR_SERIAL_LEN] = "000000000000";

@@ -25,26 +25,18 @@
 
 // prototypes
 void uart0_irq_fn(void);
-void uart1_irq_fn(void);
 
-const uart_id_t UART_ID[CFG_TUD_CDC] = {
-    {
-        .inst = uart0,
-        .irq = UART0_IRQ,
-        .irq_fn = &uart0_irq_fn,
-        .tx_pin = 12,
-        .rx_pin = 13,
-    },
-    {
-        .inst = uart1,
-        .irq = UART1_IRQ,
-        .irq_fn = &uart1_irq_fn,
-        .tx_pin = 4,
-        .rx_pin = 5,
-    }
+const uart_id_t UART_ID = {
+
+    .inst = uart0,
+    .irq = UART0_IRQ,
+    .irq_fn = &uart0_irq_fn,
+    .tx_pin = 12,
+    .rx_pin = 13,
+
 };
 
-uart_data_t UART_DATA[CFG_TUD_CDC];
+uart_data_t UART_DATA;
 
 static inline uint databits_usb2uart(uint8_t data_bits)
 {
@@ -85,10 +77,10 @@ static inline uint stopbits_usb2uart(uint8_t stop_bits)
     }
 }
 
-void update_uart_cfg(uint8_t itf)
+void update_uart_cfg(void)
 {
-    const uart_id_t *ui = &UART_ID[itf];
-    uart_data_t *ud = &UART_DATA[itf];
+    const uart_id_t *ui = &UART_ID;
+    uart_data_t *ud = &UART_DATA;
 
     mutex_enter_blocking(&ud->lc_mtx);
 
@@ -113,12 +105,12 @@ void update_uart_cfg(uint8_t itf)
     mutex_exit(&ud->lc_mtx);
 }
 
-void usb_read_bytes(uint8_t itf)
+void usb_read_bytes(void)
 {
-    uart_data_t *ud = &UART_DATA[itf];
+    uart_data_t *ud = &UART_DATA;
     uint32_t len;
 
-    len = tud_cdc_n_available(itf);
+    len = tud_cdc_n_available(0);
 
     if (len && mutex_try_enter(&ud->usb_mtx, NULL))
     {
@@ -127,7 +119,7 @@ void usb_read_bytes(uint8_t itf)
         {
             uint32_t count;
 
-            count = tud_cdc_n_read(itf, &ud->usb_buffer[ud->usb_pos], len);
+            count = tud_cdc_n_read(0, &ud->usb_buffer[ud->usb_pos], len);
             ud->usb_pos += count;
         }
 
@@ -135,15 +127,15 @@ void usb_read_bytes(uint8_t itf)
     }
 }
 
-void usb_write_bytes(uint8_t itf)
+void usb_write_bytes(void)
 {
-    uart_data_t *ud = &UART_DATA[itf];
+    uart_data_t *ud = &UART_DATA;
 
     if (ud->uart_pos && mutex_try_enter(&ud->uart_mtx, NULL))
     {
         uint32_t count;
 
-        count = tud_cdc_n_write(itf, ud->uart_buffer, ud->uart_pos);
+        count = tud_cdc_n_write(0, ud->uart_buffer, ud->uart_pos);
         if (count < ud->uart_pos)
         {
             memmove(ud->uart_buffer, &ud->uart_buffer[count], ud->uart_pos - count);
@@ -154,28 +146,28 @@ void usb_write_bytes(uint8_t itf)
 
         if (count)
         {
-            tud_cdc_n_write_flush(itf);
+            tud_cdc_n_write_flush(0);
         }
     }
 }
 
 // rea/write usb data
-void usb_cdc_process(uint8_t itf)
+void usb_cdc_process(void)
 {
-    uart_data_t *ud = &UART_DATA[itf];
+    uart_data_t *ud = &UART_DATA;
 
     mutex_enter_blocking(&ud->lc_mtx);
-    tud_cdc_n_get_line_coding(itf, &ud->usb_lc);
+    tud_cdc_n_get_line_coding(0, &ud->usb_lc);
     mutex_exit(&ud->lc_mtx);
 
-    usb_read_bytes(itf);
-    usb_write_bytes(itf);
+    usb_read_bytes();
+    usb_write_bytes();
 }
 
-inline void dbg_print_usb(uint8_t itf, uint8_t *msg)
+inline void dbg_print_usb(uint8_t *msg)
 {
 
-    uart_data_t *ud = &UART_DATA[itf];
+    uart_data_t *ud = &UART_DATA;
 
     mutex_enter_blocking(&ud->uart_mtx);
 
@@ -188,9 +180,9 @@ inline void dbg_print_usb(uint8_t itf, uint8_t *msg)
     mutex_exit(&ud->uart_mtx);
 }
 
-inline void dbg_putc_usb(uint8_t itf, uint8_t data)
+inline void dbg_putc_usb(uint8_t data)
 {
-    uart_data_t *ud = &UART_DATA[itf];
+    uart_data_t *ud = &UART_DATA;
 
     mutex_enter_blocking(&ud->uart_mtx);
 
@@ -200,10 +192,10 @@ inline void dbg_putc_usb(uint8_t itf, uint8_t data)
     mutex_exit(&ud->uart_mtx);
 }
 
-static inline void uart_read_bytes(uint8_t itf)
+static inline void uart_read_bytes(void)
 {
-    uart_data_t *ud = &UART_DATA[itf];
-    const uart_id_t *ui = &UART_ID[itf];
+    uart_data_t *ud = &UART_DATA;
+    const uart_id_t *ui = &UART_ID;
 
     if (uart_is_readable(ui->inst))
     {
@@ -221,17 +213,13 @@ static inline void uart_read_bytes(uint8_t itf)
 
 void uart0_irq_fn(void)
 {
-    uart_read_bytes(0);
+    uart_read_bytes();
 }
 
-void uart1_irq_fn(void)
-{
-    uart_read_bytes(1);
-}
 
-inline void dbg_read_usb(uint8_t itf, uint8_t *msg)
+inline void dbg_read_usb(uint8_t *msg)
 {
-    uart_data_t *ud = &UART_DATA[itf];
+    uart_data_t *ud = &UART_DATA;
 
     if (ud->usb_pos && mutex_try_enter(&ud->usb_mtx, NULL))
     {
@@ -253,13 +241,13 @@ inline void dbg_read_usb(uint8_t itf, uint8_t *msg)
     }
 }
 
-void uart_write_bytes(uint8_t itf)
+void uart_write_bytes(void)
 {
-    uart_data_t *ud = &UART_DATA[itf];
+    uart_data_t *ud = &UART_DATA;
 
     if (ud->usb_pos && mutex_try_enter(&ud->usb_mtx, NULL))
     {
-        const uart_id_t *ui = &UART_ID[itf];
+        const uart_id_t *ui = &UART_ID;
         uint32_t count = 0;
 
         while (uart_is_writable(ui->inst) && count < ud->usb_pos)
@@ -278,26 +266,38 @@ void uart_write_bytes(uint8_t itf)
     }
 }
 
-void init_uart_data(uint8_t itf)
+void init_uart_hw(void)
 {
-    const uart_id_t *ui = &UART_ID[itf];
-    uart_data_t *ud = &UART_DATA[itf];
+    const uart_id_t *ui = &UART_ID;
+    uart_data_t *ud = &UART_DATA;
 
     /* Pinmux */
     gpio_set_function(ui->tx_pin, GPIO_FUNC_UART);
     gpio_set_function(ui->rx_pin, GPIO_FUNC_UART);
-    if (itf == 0)
-    {
-        // enable pullup and invert rx and tx
-        gpio_set_pulls(ui->rx_pin, true, false);
-        gpio_set_outover(ui->tx_pin, GPIO_OVERRIDE_INVERT);
-        gpio_set_inover(ui->rx_pin, GPIO_OVERRIDE_INVERT);
-    }
-    else if (itf == 1)
-    {
-        // enable pulldown
-        gpio_set_pulls(ui->rx_pin, false, true);
-    }
+
+    // enable pullup and invert rx and tx
+    gpio_set_pulls(ui->rx_pin, true, false);
+    gpio_set_outover(ui->tx_pin, GPIO_OVERRIDE_INVERT);
+    gpio_set_inover(ui->rx_pin, GPIO_OVERRIDE_INVERT);
+
+    /* UART start */
+    uart_init(ui->inst, ud->usb_lc.bit_rate);
+    uart_set_hw_flow(ui->inst, false, false);
+    uart_set_format(ui->inst, databits_usb2uart(ud->usb_lc.data_bits),
+                    stopbits_usb2uart(ud->usb_lc.stop_bits),
+                    parity_usb2uart(ud->usb_lc.parity));
+    uart_set_fifo_enabled(ui->inst, false);
+
+    /* UART RX Interrupt */
+    irq_set_exclusive_handler(ui->irq, ui->irq_fn);
+    irq_set_enabled(ui->irq, true);
+    uart_set_irq_enables(ui->inst, true, false);
+}
+
+void init_uart_data(void)
+{
+    const uart_id_t *ui = &UART_ID;
+    uart_data_t *ud = &UART_DATA;
 
     /* USB CDC LC */
     ud->usb_lc.bit_rate = DEF_BIT_RATE;
@@ -319,17 +319,4 @@ void init_uart_data(uint8_t itf)
     mutex_init(&ud->lc_mtx);
     mutex_init(&ud->uart_mtx);
     mutex_init(&ud->usb_mtx);
-
-    /* UART start */
-    uart_init(ui->inst, ud->usb_lc.bit_rate);
-    uart_set_hw_flow(ui->inst, false, false);
-    uart_set_format(ui->inst, databits_usb2uart(ud->usb_lc.data_bits),
-                    stopbits_usb2uart(ud->usb_lc.stop_bits),
-                    parity_usb2uart(ud->usb_lc.parity));
-    uart_set_fifo_enabled(ui->inst, false);
-
-    /* UART RX Interrupt */
-    irq_set_exclusive_handler(ui->irq, ui->irq_fn);
-    irq_set_enabled(ui->irq, true);
-    uart_set_irq_enables(ui->inst, true, false);
 }
