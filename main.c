@@ -44,10 +44,14 @@ void core1_entry(void)
 // main program core 0
 int main(void)
 {
+    const uint32_t looptime = 10;
+    const uint32_t pwrupdlytime = 50 * 1000 / looptime;
+    const uint32_t pwmupdatetime = 200 * 1000 / looptime;
+    static uint32_t state;
     uint32_t pulse;
     uint32_t angle;
     bool update_angle;
-    uint32_t update_angle_cnt;
+    bool update_print_angle;
     bool escpower;
     uint32_t escpower_cnt;
     uint32_t rec_update_cnt;
@@ -58,22 +62,23 @@ int main(void)
     uint32_t stdin_buf_pos;
     uint32_t x;
 
+
     // init gpio but not uart pins
     init_gpio();
 
     if (watchdog_enable_caused_reboot())
     {
-        for (x = 0; x < 9; x++)
+        for (x = 0; x < 3; x++)
         {
-            set_onboard_led(1);
-            sleep_x10ms(5);
             set_onboard_led(0);
-            sleep_x10ms(45);
+            sleep_ms(50);
+            set_onboard_led(1);
+            sleep_ms(450);
         }
         set_onboard_led(1);
     }
     // start watchdog
-    watchdog_enable(250, 1);
+    watchdog_enable(500, 1);
 
     // check for push button to select operation mode
     opmode = opmode_select();
@@ -94,7 +99,7 @@ int main(void)
             update_uart_cfg();
             uart_write_bytes();
 
-            sleep_us(10);
+            sleep_us(looptime);
             if (check_button_event() == bt_evtup_long)
             {
                 dbg_print_usb("Going down esc progrmmer\n");
@@ -106,8 +111,8 @@ int main(void)
     // reciever mode
     else if (opmode == opmode_rec)
     {
-        // set pin as input for RC receiver and start measuring pulses
         rc_init_input(RECV_CH1_PIN, true);
+
         usbd_serial_init();
         init_uart_data();
         // start core 1
@@ -159,7 +164,7 @@ int main(void)
                 }
             }
 
-            sleep_us(10);
+            sleep_us(looptime);
             if (check_button_event() == bt_evtup_long)
             {
                 dbg_print_usb("Going down receiver test\n");
@@ -171,9 +176,9 @@ int main(void)
     // servo mode
     else if (opmode == opmode_servo)
     {
-        // create servo object and start pwm
-        rc_servo myServo1 = rc_servo_init(SERV_CH1_PIN);
-        rc_servo_start(&myServo1, 90);// set servo1 90 degrees
+        rc_servo Servo1 = rc_servo_init(SERV_CH1_PIN);
+        rc_init_input(RECV_CH1_PIN, true);
+        ;
 
         usbd_serial_init();
 
@@ -184,9 +189,9 @@ int main(void)
 
         angle = 90;
         update_angle = 0;
-        update_angle_cnt = 0;
         escpower = 0;
         escpower_cnt = 0;
+        state = 0;
         memset(stdin_buf, 0, sizeof(stdin_buf));
         while (1)
         {
@@ -203,112 +208,102 @@ int main(void)
                     if (angle < 180)
                     {
                         angle++;
-                    }
-
-                    if (escpower == 1)
-                    {
                         update_angle = 1;
                     }
-                    else
-                    {
-                        update_angle = 0;
-                        sprintf(print_buf, "INC ch1 = %lu deg\n", angle);
-                        dbg_print_usb(print_buf);
-                    }
+                    update_print_angle = 1;
                 }
                 else if (stdin_buf[stdin_buf_pos] == '-')
                 {
                     if (angle > 0)
                     {
                         angle--;
-                    }
-
-                    if (escpower == 1)
-                    {
                         update_angle = 1;
                     }
-                    else
-                    {
-                        update_angle = 0;
-                        sprintf(print_buf, "DEC ch1 = %lu deg\n", angle);
-                        dbg_print_usb(print_buf);
-                    }
+                    update_print_angle = 1;
                 }
                 else if (stdin_buf[stdin_buf_pos] == 'o')
                 {
                     angle = 180;
-
-                    if (escpower == 1)
-                    {
-                        update_angle = 1;
-                    }
-                    else
-                    {
-                        update_angle = 0;
-                        sprintf(print_buf, "Set ch1 = %lu deg\n", angle);
-                        dbg_print_usb(print_buf);
-                    }
+                    update_angle = 1;
+                    update_print_angle = 1;
                 }
                 else if (stdin_buf[stdin_buf_pos] == 'k')
                 {
                     angle = 90;
-
-                    if (escpower == 1)
-                    {
-                        update_angle = 1;
-                    }
-                    else
-                    {
-                        update_angle = 0;
-                        sprintf(print_buf, "Set ch1 = %lu deg\n", angle);
-                        dbg_print_usb(print_buf);
-                    }
+                    update_angle = 1;
+                    update_print_angle = 1;
                 }
                 else if (stdin_buf[stdin_buf_pos] == 'm')
                 {
                     angle = 0;
-
-                    if (escpower == 1)
-                    {
-                        update_angle = 1;
-                    }
-                    else
-                    {
-                        update_angle = 0;
-                        sprintf(print_buf, "Set ch1 = %lu deg\n", angle);
-                        dbg_print_usb(print_buf);
-                    }
+                    update_angle = 1;
+                    update_print_angle = 1;
                 }
                 stdin_buf[stdin_buf_pos] = 0;
                 stdin_buf_pos++;
             }
 
-            escpower_cnt++;
-            if (escpower_cnt >= 1000 * 100)
+            if (update_print_angle)
             {
-                escpower_cnt = 0;
-                if (escpower == 0)
-                {
-                    sprintf(print_buf, "Power Servo up\n");
-                    dbg_print_usb(print_buf);
-                }
+                update_print_angle = 0;
+                sprintf(print_buf, "Set ch1 = %lu deg\n", angle);
+                dbg_print_usb(print_buf);
             }
 
-            update_angle_cnt++;
-            if (update_angle_cnt >= 25 * 100)
+            switch (state)
             {
-                update_angle_cnt = 0;
-                if (update_angle)
-                {
-                    update_angle = 0;
-                    update_angle_cnt = 0;
-                    rc_servo_set_angle(&myServo1, angle);
-                    sprintf(print_buf, "Write ch1 = %lu deg\n", angle);
-                    dbg_print_usb(print_buf);
-                }
+                case 0:// init wait for power up
+                    if (escpower)
+                    {
+                        // start pwm
+                        rc_servo_start(&Servo1, angle);// set servo1 start degrees
+                        sprintf(print_buf, "Start ch1 = %lu deg\n", angle);
+                        dbg_print_usb(print_buf);
+                        escpower_cnt = 0;
+                        state = 1;
+                    }
+                    break;
+                case 1:// power up delay
+                    escpower_cnt++;
+                    if (escpower_cnt > pwrupdlytime)
+                    {
+                        escpower_cnt = 0;
+                        state = 2;
+                    }
+                    break;
+                case 2:
+                    escpower_cnt++;
+                    if (escpower_cnt == pwmupdatetime/2)
+                    {
+                        // Read input from RC receiver - that is pulse width on input pin.
+                        pulse = rc_get_input_pulse_width(RECV_CH1_PIN);
+                        sprintf(print_buf, "Pulse ch1= %lu\n", pulse);
+                        dbg_print_usb(print_buf);
+                    }
+
+                    if (escpower_cnt > pwmupdatetime)
+                    {
+                        escpower_cnt = 0;
+                        if (update_angle)
+                        {
+                            update_angle = 0;
+                            rc_servo_set_angle(&Servo1, angle);
+                            sprintf(print_buf, "Write ch1 = %lu deg\n", angle);
+                            dbg_print_usb(print_buf);
+                        }
+                    }
+                    if (escpower == 0)
+                    {
+                        rc_servo_stop(&Servo1, true);
+                        dbg_print_usb("Power is off\n");
+                        state = 0;
+                    }
+                    break;
+                default:
+                    break;
             }
 
-            sleep_us(10);
+            sleep_us(looptime);
             if (check_button_event() == bt_evtup_long)
             {
                 dbg_print_usb("Going down servo test\n");

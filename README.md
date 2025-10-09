@@ -1,7 +1,7 @@
 Raspberry Pi Pico USBLink
 =========================
 
-This program creates a USB to OneWire UART (UART0) bridge on the uniesc hardware. A second USB to UART bridge is created on UART1.
+This program creates a USB to OneWire UART (UART0) bridge on the uniesc hardware. It also adds a servo and receiver tester.
 
 Disclaimer
 ----------
