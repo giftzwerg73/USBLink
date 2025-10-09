@@ -1,0 +1,38 @@
+
+USBLink manual 
+==============
+
+Document-Version: V1.0
+HW-Version: V1.0
+FW-Version: V1.0
+
+Describtion
+-----------
+This is an alternative firmware for the UniEsc hardware V1.0. It implements a Programmer for AM32 ESCs. 
+Further more it can be used as a RC servo tester aswell as a RC reveiver tester.  
+
+Select operation mode
+---------------------
+By default it will start in programmer mode if the push button is not pressed at boot up.
+To enter the tester modes hold down the button during boot until the blue LED turns on.
+To toggle through the three modes do short key-presses (100 to 1000ms). 
+The different modes will be visualized by the blinkrate of the blue LED.
+
+|---------------------|----------------------|
+| Mode                | Blink Period         |  
+|---------------------|----------------------|
+| ESC Programmer      | 1000ms on 1000ms off |    
+| Recever Tester      | 250ms  on 250ms  off | 
+| Servo Tester        | 100ms  on 100ms  off |  
+
+To enter the selected mode do a long key-press (>3000ms). To confirm the selection the red and blue LED will start
+blinking alternately for 5 times.
+
+To exit a mode do a long key-press (>3000ms). The blue LED will start bliniking fast and a reset is triggered. 
+During boot hold down button to select tester-modes or leave button unpressed to enter programmer mode (same as above).
+
+
+
+
+  
+        
