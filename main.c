@@ -47,6 +47,8 @@ int main(void)
     const uint32_t looptime = 10;
     const uint32_t pwrupdlytime = 3 * 1000 / looptime;
     const uint32_t pwmupdatetime = 200 * 1000 / looptime;
+    const uint32_t recvupdatetime = 100 * 1000 / looptime;
+    const uint32_t msgupdatetime = 1000 * 1000 / looptime;
     static uint32_t state;
     uint32_t pulse;
     uint32_t angle;
@@ -93,16 +95,31 @@ int main(void)
         // start core 1
         multicore_launch_core1(core1_entry);
 
+        escpower_cnt = 0;
         while (1)
         {
             watchdog_update();
             update_uart_cfg();
             uart_write_bytes();
+            escpower = ceck_escpwr();
+            
+            if(escpower == 0)
+            {
+				escpower_cnt++;
+				if (escpower_cnt > msgupdatetime)
+                {
+					dbg_print_usb("Switch power on\n");
+				    escpower_cnt = 0;
+				}
+			}
 
             sleep_us(looptime);
             if (check_button_event() == bt_evtup_long)
             {
-                dbg_print_usb("Going down esc progrmmer\n");
+				if(escpower == 0)
+				{
+                    dbg_print_usb("Going down esc progrmmer\n");
+			    }
                 trigger_reset();
             }
         }
@@ -118,7 +135,6 @@ int main(void)
         // start core 1
         multicore_launch_core1(core1_entry);
 
-        escpower = 0;
         escpower_cnt = 0;
         state = 0;
         memset(stdin_buf, 0, sizeof(stdin_buf));
@@ -145,7 +161,7 @@ int main(void)
                     else
                     {
                         escpower_cnt++;
-                        if (escpower_cnt > pwmupdatetime)
+                        if (escpower_cnt > msgupdatetime)
                         {
                             dbg_print_usb("Switch power on\n");
                             escpower_cnt = 0;
@@ -175,7 +191,7 @@ int main(void)
                     if (escpower)
                     {
                         escpower_cnt++;
-                        if (escpower_cnt > pwmupdatetime)
+                        if (escpower_cnt > recvupdatetime)
                         {
                             // Read input from RC receiver - that is pulse width on input pin.
                             pulse = rc_get_input_pulse_width(RECV_CH1_PIN);
@@ -224,7 +240,6 @@ int main(void)
 
         angle = 90;
         update_angle = 0;
-        escpower = 0;
         escpower_cnt = 0;
         state = 0;
         memset(stdin_buf, 0, sizeof(stdin_buf));
@@ -291,7 +306,7 @@ int main(void)
                     if (escpower)
                     {
                         escpower_cnt++;
-                        if (escpower_cnt > pwmupdatetime)
+                        if (escpower_cnt > msgupdatetime)
                         {
                             dbg_print_usb("Switch power off first\n");
                             escpower_cnt = 0;
@@ -327,6 +342,7 @@ int main(void)
                     }
                     else
                     {
+						dbg_print_usb("Power is off\n");
                         escpower_cnt = 0;
                         state = 4;
                     }
