@@ -148,6 +148,9 @@ int main(void)
             switch (state)
             {
                 case 0:
+                    gpio_init(SERV_CH1_PIN);
+                    gpio_set_dir(SERV_CH1_PIN, GPIO_OUT);
+                    gpio_put(SERV_CH1_PIN, 0);
                     rc_init_input(RECV_CH1_PIN, true);
                     escpower_cnt = 0;
                     state = 1;

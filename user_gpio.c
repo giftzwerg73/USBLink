@@ -185,8 +185,8 @@ uint8_t opmode_select(void)
                     case 0:// wait for button release
                         if (get_button() == 1 && get_button() == 1 && get_button() == 1)
                         {
-                            blink_on = 250 * 1000 / looptime;
-                            blink_off = 250 * 1000 / looptime;
+                            blink_on = 200 * 1000 / looptime;
+                            blink_off = 200 * 1000 / looptime;
                             blink_cnt = 0;
                             opmode = opmode_rec;
                             state = 1;
@@ -209,8 +209,8 @@ uint8_t opmode_select(void)
                         {
                             if (opmode == opmode_esc)
                             {
-                                blink_on = 250 * 1000 / looptime;
-                                blink_off = 250 * 1000 / looptime;
+                                blink_on = 200 * 1000 / looptime;
+                                blink_off = 200 * 1000 / looptime;
                                 blink_cnt = 0;
                                 opmode = opmode_rec;
                             }
@@ -223,8 +223,8 @@ uint8_t opmode_select(void)
                             }
                             else if (opmode == opmode_servo)
                             {
-                                blink_on = 500 * 1000 / looptime;
-                                blink_off = 500 * 1000 / looptime;
+                                blink_on = 400 * 1000 / looptime;
+                                blink_off = 400 * 1000 / looptime;
                                 blink_cnt = 0;
                                 opmode = opmode_esc;
                             }

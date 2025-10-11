@@ -18,12 +18,12 @@ To enter the tester modes hold down the button during boot until the blue LED tu
 To toggle through the three modes do short key-presses (100 to 1000ms). 
 The different modes will be visualized by the blinkrate of the blue LED.
 
-|---------------------|----------------------|
-| Mode                | Blink Period         |  
-|---------------------|----------------------|
-| ESC Programmer      | 1000ms on 1000ms off |    
-| Recever Tester      | 250ms  on 250ms  off | 
-| Servo Tester        | 100ms  on 100ms  off |  
+|---------------------|---------------------|
+| Mode                | Blink Period        |  
+|---------------------|---------------------|
+| ESC Programmer      | 400ms on  400ms off |    
+| Recever Tester      | 200ms on  200ms off | 
+| Servo Tester        | 100ms on  100ms off |  
 
 To enter the selected mode do a long key-press (>3000ms). To confirm the selection the red and blue LED will start
 blinking alternately for 5 times.
