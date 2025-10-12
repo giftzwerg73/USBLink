@@ -335,6 +335,7 @@ uint8_t check_button_event(void)
                 time_cnt++;
             if (button_state == bt_up)
             {
+                ret = bt_evtup;
                 if (time_cnt > 100 * 100 && time_cnt < 1000 * 100)
                 {
                     ret = bt_evtup_short;
@@ -342,10 +343,6 @@ uint8_t check_button_event(void)
                 else if (time_cnt >= 2500 * 100)
                 {
                     ret = bt_evtup_long;
-                }
-                else
-                {
-                    ret = bt_evtup;
                 }
                 state = 1;
             }
