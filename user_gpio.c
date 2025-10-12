@@ -19,11 +19,6 @@
 #include "pico/cyw43_arch.h"
 #endif
 
-// input variable
-static uint8_t btn[3];
-static uint8_t vusb[3];
-static uint8_t escpwr[3];
-
 // read usb power
 inline bool get_vusb(void)
 {
@@ -85,7 +80,7 @@ inline void toggle_red_led(void)
 }
 
 // initialise onboard led
-static inline int onboard_led_init(void)
+static inline uint32_t onboard_led_init(void)
 {
 #if defined(PICO_DEFAULT_LED_PIN)
     // A device like Pico that uses a GPIO for the LED will define PICO_DEFAULT_LED_PIN
@@ -102,7 +97,7 @@ static inline int onboard_led_init(void)
 // initialise gpio
 void init_gpio(void)
 {
-    int rc;
+    uint32_t rc;
 
     // init gpio
     rc = onboard_led_init();
@@ -120,24 +115,38 @@ void init_gpio(void)
     set_blue_led(0);
     set_red_led(0);
     set_onboard_led(1);
-    // read inputs
-    vusb[0] = vusb[1] = vusb[2] = get_vusb();
-    escpwr[0] = escpwr[1] = get_escpower();
-    escpwr[2] = 255;
-    btn[0] = btn[1] = get_button();
-    btn[2] = 255;
 }
 
 // get state of button 1=presses 0=relesed 255=unknown
 uint8_t get_button_state(void)
 {
-    return btn[2];
-}
+    static int32_t sample_cnt = 0;
+    uint8_t ret;
 
-// get state of esc power 1=power-up 0=power-down 255=unknown
-uint8_t get_escpwr_state(void)
-{
-    return escpwr[2];
+    ret = bt_undev;
+    if (get_button())
+    {
+        if (sample_cnt < 50)
+        {
+            sample_cnt++;
+        }
+        else
+        {
+            ret = bt_up;
+        }
+    }
+    else
+    {
+        if (sample_cnt > -50)
+        {
+            sample_cnt--;
+        }
+        else
+        {
+            ret = bt_down;
+        }
+    }
+    return ret;
 }
 
 // sleep x times 10ms and feed wathdog
@@ -159,121 +168,121 @@ uint8_t opmode_select(void)
     uint8_t state;
     uint8_t opmode;
     uint8_t bt_evnt;
-    uint8_t print_buf[128];
     uint32_t blink_on, blink_off, blink_cnt, ret_cnt;
 
     set_blue_led(0);
     set_red_led(0);
     opmode = opmode_esc;
+    state = 0;
     while (1)
-    {// first check until button settled up or down
+    {
         watchdog_update();
-        if (get_button() == 1 && get_button() == 1 && get_button() == 1)
-        {// button up
-            opmode = opmode_esc;
-            return opmode;
-        }
-        else if (get_button() == 0 && get_button() == 0 && get_button() == 0)
-        {//  button down -> selection mode
-            set_blue_led(1);
-            state = 0;
-            while (1)
-            {
-                watchdog_update();
-                switch (state)
+        bt_evnt = check_button_event();
+        switch (state)
+        {
+            case 0:// first check until button settled up or down
+                if (bt_evnt == bt_up)
+                {// -> esc mode
+                    opmode = opmode_esc;
+                    return opmode;
+                }
+                else if (bt_evnt == bt_down)
+                {// -> selection mode
+                    set_blue_led(1);
+                    state = 1;
+                }
+                break;
+            case 1:// wait for button release no matter how long
+                if (bt_evnt == bt_evtup || bt_evnt == bt_evtup_short || bt_evnt == bt_evtup_long)
                 {
-                    case 0:// wait for button release
-                        if (get_button() == 1 && get_button() == 1 && get_button() == 1)
-                        {
-                            blink_on = 200 * 1000 / looptime;
-                            blink_off = 200 * 1000 / looptime;
-                            blink_cnt = 0;
-                            opmode = opmode_rec;
-                            state = 1;
-                        }
-                        break;
-                    case 1:
-                        // blink blue led according to opmode
-                        blink_cnt++;
-                        if (blink_cnt == blink_on)
-                        {
-                            set_blue_led(1);
-                        }
-                        if (blink_cnt == blink_on + blink_off)
-                        {
-                            set_blue_led(0);
-                            blink_cnt = 0;
-                        }
-                        bt_evnt = check_button_event();
-                        if (bt_evnt == bt_evtup_short)
-                        {
-                            if (opmode == opmode_esc)
-                            {
-                                blink_on = 200 * 1000 / looptime;
-                                blink_off = 200 * 1000 / looptime;
-                                blink_cnt = 0;
-                                opmode = opmode_rec;
-                            }
-                            else if (opmode == opmode_rec)
-                            {
-                                blink_on = 100 * 1000 / looptime;
-                                blink_off = 100 * 1000 / looptime;
-                                blink_cnt = 0;
-                                opmode = opmode_servo;
-                            }
-                            else if (opmode == opmode_servo)
-                            {
-                                blink_on = 400 * 1000 / looptime;
-                                blink_off = 400 * 1000 / looptime;
-                                blink_cnt = 0;
-                                opmode = opmode_esc;
-                            }
-                        }
-                        else if (bt_evnt == bt_evtup_long)
-                        {
-                            blink_on = 250 * 1000 / looptime;
-                            blink_off = 250 * 1000 / looptime;
-                            blink_cnt = 0;
-                            ret_cnt = 5;
-                            set_blue_led(0);
-                            set_red_led(0);
-                            state = 2;
-                        }
-                        break;
-                    case 2:
-                        blink_cnt++;
-                        if (blink_cnt == blink_on)
-                        {
-                            set_blue_led(0);
-                            set_red_led(1);
-                        }
-                        if (blink_cnt == blink_on + blink_off)
-                        {
-                            set_blue_led(1);
-                            set_red_led(0);
-                            blink_cnt = 0;
-                            ret_cnt--;
-                        }
-
-                        if (ret_cnt == 0)
-                        {
-                            set_blue_led(0);
-                            set_red_led(0);
-                            return opmode;
-                        }
-                        break;
-                    default:
-                        break;
+                    blink_on = 200 * 1000 / looptime;
+                    blink_off = 200 * 1000 / looptime;
+                    blink_cnt = 0;
+                    opmode = opmode_rec;
+                    state = 2;
+                }
+                break;
+            case 2:
+                // blink blue led according to opmode
+                blink_cnt++;
+                if (blink_cnt == blink_on)
+                {
+                    set_blue_led(1);
+                }
+                if (blink_cnt == blink_on + blink_off)
+                {
+                    set_blue_led(0);
+                    blink_cnt = 0;
                 }
 
-                sleep_us(looptime);
-            }
+                if (bt_evnt == bt_evtup_short)
+                {
+                    if (opmode == opmode_esc)
+                    {
+                        blink_on = 200 * 1000 / looptime;
+                        blink_off = 200 * 1000 / looptime;
+                        blink_cnt = 0;
+                        opmode = opmode_rec;
+                    }
+                    else if (opmode == opmode_rec)
+                    {
+                        blink_on = 100 * 1000 / looptime;
+                        blink_off = 100 * 1000 / looptime;
+                        blink_cnt = 0;
+                        opmode = opmode_servo;
+                    }
+                    else if (opmode == opmode_servo)
+                    {
+                        blink_on = 400 * 1000 / looptime;
+                        blink_off = 400 * 1000 / looptime;
+                        blink_cnt = 0;
+                        opmode = opmode_esc;
+                    }
+                }
+                else if (bt_evnt == bt_evtup_long)
+                {
+                    blink_on = 250 * 1000 / looptime;
+                    blink_off = 250 * 1000 / looptime;
+                    blink_cnt = 0;
+                    ret_cnt = 5;
+                    set_blue_led(0);
+                    set_red_led(0);
+                    state = 3;
+                }
+                break;
+            case 3:
+                blink_cnt++;
+                if (blink_cnt == blink_on)
+                {
+                    set_blue_led(0);
+                    set_red_led(1);
+                }
+                if (blink_cnt == blink_on + blink_off)
+                {
+                    set_blue_led(1);
+                    set_red_led(0);
+                    blink_cnt = 0;
+                    ret_cnt--;
+                }
+
+                if (ret_cnt == 0)
+                {
+                    set_blue_led(0);
+                    set_red_led(0);
+                    return opmode;
+                }
+                break;
+            default:
+                break;
         }
+
+        sleep_us(looptime);
     }
 }
 
+
 // check esc power gpio
-bool ceck_escpwr(void)
+bool check_escpwr(void)
 {
     if (get_escpower() == 1 && get_escpower() == 1 && get_escpower() == 1)
     {
@@ -294,53 +303,45 @@ uint8_t check_button_event(void)
     bool button_buf[3];
     uint8_t button_state;
 
-    button_buf[0] = get_button();
-    button_buf[1] = get_button();
-    button_buf[2] = get_button();
-    if (button_buf[0] == 1 && button_buf[1] == 1 && button_buf[2] == 1)
-        button_state = 0;
-    else if (button_buf[0] == 0 && button_buf[1] == 0 && button_buf[2] == 0)
-        button_state = 1;
-    else
-        button_state = 255;
-
+    button_state = get_button_state();
     switch (state)
     {
-        case 0:// init, wait until not pressed
+        case 0:// init, wait until stable
             ret = bt_undev;
-            if (button_state == 0)
+            if (button_state == bt_up)
             {
                 ret = bt_up;
-                time_cnt = 0;
                 state = 1;
+            }
+            else if (button_state == bt_down)
+            {
+                ret = bt_down;
+                time_cnt = 0;
+                state = 2;
             }
             break;
         case 1:// button not pressed
             ret = bt_up;
-            if (button_state == 1)
+            if (button_state == bt_down)
             {
                 ret = bt_evtdown;
+                time_cnt = 0;
                 state = 2;
             }
             break;
-        case 2:// button down event
+        case 2:// button pressed
             ret = bt_down;
-            state = 3;
-            break;
-        case 3:// button pressed
-            time_cnt++;
-            ret = bt_down;
-            if (button_state == 0)
+            if (time_cnt < 10000 * 100)
+                time_cnt++;
+            if (button_state == bt_up)
             {
                 ret = bt_evtup;
-                if (time_cnt > 150 * 100 && time_cnt < 1000 * 100)
+                if (time_cnt > 100 * 100 && time_cnt < 1000 * 100)
                 {
-                    time_cnt = 0;
                     ret = bt_evtup_short;
                 }
-                else if (time_cnt > 3000 * 100)
+                else if (time_cnt >= 2500 * 100)
                 {
-                    time_cnt = 0;
                     ret = bt_evtup_long;
                 }
                 state = 1;
@@ -372,83 +373,3 @@ void trigger_reset(void)
     while (1)
         blink_cnt++;
 }
-
-/*
-void test_code_opmode(void)
-{
-    // test code opmode()
-    uint8_t state;
-    uint8_t bt_evnt;
-
-    usbd_serial_init();
-    init_uart_data();
-    // start core 1
-    multicore_launch_core1(core1_entry);
-
-    set_blue_led(0);
-    set_red_led(0);
-    opmode = opmode_esc;
-    state = 0;
-    sleep_ms(30);
-    while (1)
-    {
-        update_uart_cfg();
-
-        watchdog_update();
-        bt_evnt = check_button_event();
-        switch (state)
-        {
-            case 0:// power up
-                if (bt_evnt == bt_up)// not pressed
-                {
-                    set_blue_led(0);
-                    set_red_led(0);
-                    opmode = opmode_esc;
-                    // return opmode;
-                }
-                else if (bt_evnt == bt_evtup)// button released
-                {
-                    state = 1;
-                    dbg_print_usb("goto select mode\n");
-                }
-                break;
-            case 1:
-                if (bt_evnt == bt_evtup_short)
-                {
-                    if (opmode == opmode_esc)
-                    {
-                        set_blue_led(0);
-                        set_red_led(1);
-                        opmode = opmode_rec;
-                        dbg_print_usb("select opmode_rec\n");
-                    }
-                    else if (opmode == opmode_rec)
-                    {
-                        set_blue_led(1);
-                        set_red_led(1);
-                        opmode = opmode_servo;
-                        dbg_print_usb("select opmode_servo\n");
-                    }
-                    else if (opmode == opmode_servo)
-                    {
-                        set_blue_led(0);
-                        set_red_led(0);
-                        opmode = opmode_esc;
-                        dbg_print_usb("select opmode_esc\n");
-                    }
-                }
-                else if (bt_evnt == bt_evtup_long)
-                {
-                    // return opmode;
-                    dbg_print_usb("return selected opmode\n");
-                }
-                break;
-            default:
-                break;
-        }
-
-        sleep_us(10);
-    }
-    // end test code opmode
-}
-*/

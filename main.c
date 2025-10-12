@@ -22,7 +22,7 @@
 // main program core 1
 void core1_entry(void)
 {
-    int con;
+    bool con;
 
     tusb_init();
 

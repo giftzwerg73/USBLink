@@ -38,7 +38,7 @@ void run_esc_app(void)
         watchdog_update();
         update_uart_cfg();
         uart_write_bytes();
-        escpower = ceck_escpwr();
+        escpower = check_escpwr();
 
         if (escpower == 0)
         {
@@ -83,7 +83,7 @@ void run_receiver_tester_app(void)
         watchdog_update();
         update_uart_cfg();
         dbg_read_usb(stdin_buf);
-        escpower = ceck_escpwr();
+        escpower = check_escpwr();
 
         switch (state)
         {
@@ -190,6 +190,7 @@ void run_servo_tester_app(void)
 
     angle = 90;
     update_angle = 0;
+    update_print_angle = 0;
     escpower_cnt = 0;
     state = 0;
     memset(stdin_buf, 0, sizeof(stdin_buf));
@@ -198,7 +199,7 @@ void run_servo_tester_app(void)
         watchdog_update();
         update_uart_cfg();
         dbg_read_usb(stdin_buf);
-        escpower = ceck_escpwr();
+        escpower = check_escpwr();
 
         stdin_buf_pos = 0;
         while (stdin_buf[stdin_buf_pos] && stdin_buf_pos < sizeof(stdin_buf))
