@@ -49,7 +49,7 @@ int main(void)
 
     // init gpio but not uart pins
     init_gpio();
-
+    // signal if watchdog hit
     if (watchdog_enable_caused_reboot())
     {
         for (x = 0; x < 3; x++)
@@ -63,10 +63,9 @@ int main(void)
     }
     // start watchdog
     watchdog_enable(500, 1);
-
     // check for push button to select operation mode
     opmode = opmode_select();
-
+    // feed watchdog
     watchdog_update();
     // esc programmer mode
     if (opmode == opmode_esc)
@@ -78,8 +77,6 @@ int main(void)
         multicore_launch_core1(core1_entry);
         // run esc programmer
         run_esc_app();
-        // should never come here
-        return 0;
     }
     // reciever test mode
     else if (opmode == opmode_rec)
@@ -90,8 +87,6 @@ int main(void)
         multicore_launch_core1(core1_entry);
         // run receiver tester
         run_receiver_tester_app();
-        // should never come here
-        return 0;
     }
     // servo mode
     else if (opmode == opmode_servo)
@@ -102,12 +97,7 @@ int main(void)
         multicore_launch_core1(core1_entry);
         // run servo tester
         run_servo_tester_app();
-        // should never come here
-        return 0;
     }
     // should never get here
-    else
-    {
-        return 0;
-    }
+    return 0;
 }
