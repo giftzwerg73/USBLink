@@ -129,9 +129,7 @@ int main(void)
     else if (opmode == opmode_rec)
     {
         usbd_serial_init();
-
         init_uart_data();
-
         // start core 1
         multicore_launch_core1(core1_entry);
 
@@ -235,9 +233,7 @@ int main(void)
     else if (opmode == opmode_servo)
     {
         usbd_serial_init();
-
         init_uart_data();
-
         // start core 1
         multicore_launch_core1(core1_entry);
 
