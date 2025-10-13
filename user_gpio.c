@@ -11,29 +11,23 @@
 #include <pico/multicore.h>
 #include <pico/stdlib.h>
 #include <string.h>
+#include "pico/cyw43_arch.h"
 
 #include "uart_bridge.h"
 #include "user_gpio.h"
 
-#ifdef CYW43_WL_GPIO_LED_PIN
-#include "pico/cyw43_arch.h"
-#endif
 
 // read usb power
 inline bool get_vusb(void)
 {
-#if defined(PICO_DEFAULT_LED_PIN)
-    // Just read GPIO24
-    return gpio_get(24);
-#elif defined(CYW43_WL_GPIO_LED_PIN)
-    // Ask the wifi "driver" to read GPIO02
+    //return gpio_get(24);
     return cyw43_arch_gpio_get(CYW43_WL_GPIO_VBUS_PIN);
-#endif
 }
 
 // read esc power
 inline bool get_escpower(void)
 {
+	//return gpio_get(24);
     return gpio_get(ESC_PWR_PIN);
 }
 
@@ -46,13 +40,8 @@ inline bool get_button(void)
 // turn onboard led on or off
 inline void set_onboard_led(bool led_on)
 {
-#if defined(PICO_DEFAULT_LED_PIN)
-    // Just set the GPIO on or off
-    gpio_put(PICO_DEFAULT_LED_PIN, led_on);
-#elif defined(CYW43_WL_GPIO_LED_PIN)
-    // Ask the wifi "driver" to set the GPIO on or off
+    //gpio_put(PICO_DEFAULT_LED_PIN, led_on);
     cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, led_on);
-#endif
 }
 
 // set blue led on or off
@@ -79,29 +68,12 @@ inline void toggle_red_led(void)
     gpio_put(LED_PIN_RED, !gpio_get_out_level(LED_PIN_RED));
 }
 
-// initialise onboard led
-static inline uint32_t onboard_led_init(void)
-{
-#if defined(PICO_DEFAULT_LED_PIN)
-    // A device like Pico that uses a GPIO for the LED will define PICO_DEFAULT_LED_PIN
-    // so we can use normal GPIO functionality to turn the led on and off
-    gpio_init(PICO_DEFAULT_LED_PIN);
-    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
-    return PICO_OK;
-#elif defined(CYW43_WL_GPIO_LED_PIN)
-    // For Pico W devices we need to initialise the driver etc
-    return cyw43_arch_init();
-#endif
-}
-
 // initialise gpio
 void init_gpio(void)
 {
-    uint32_t rc;
-
-    // init gpio
-    rc = onboard_led_init();
-    hard_assert(rc == PICO_OK);
+	// init gpio
+    //gpio_init(PICO_DEFAULT_LED_PIN);
+    //gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     gpio_init(LED_PIN_BLUE);
     gpio_init(LED_PIN_RED);
     gpio_init(SW_PIN);
@@ -114,7 +86,6 @@ void init_gpio(void)
     // set leds blue and red off green on
     set_blue_led(0);
     set_red_led(0);
-    set_onboard_led(1);
 }
 
 // get state of button 1=presses 0=relesed 255=unknown

@@ -11,13 +11,11 @@
 #include <pico/stdlib.h>
 #include <string.h>
 #include <tusb.h>
+#include "pico/cyw43_arch.h"
 
 #include "uart_bridge.h"
 #include "user_gpio.h"
 
-#ifdef CYW43_WL_GPIO_LED_PIN
-#include "pico/cyw43_arch.h"
-#endif
 
 #if !defined(MIN)
 #define MIN(a, b) ((a > b) ? b : a)

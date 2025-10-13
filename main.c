@@ -12,6 +12,7 @@
 #include <pico/stdlib.h>
 #include <string.h>
 #include <tusb.h>
+#include "pico/cyw43_arch.h"
 
 #include "main_run.h"
 #include "uart_bridge.h"
@@ -49,6 +50,11 @@ int main(void)
 
     // init gpio but not uart pins
     init_gpio();
+    // init rf
+    if (cyw43_arch_init()) 
+    {
+        return -1;
+    }
     // signal if watchdog hit
     if (watchdog_enable_caused_reboot())
     {
@@ -59,8 +65,9 @@ int main(void)
             set_onboard_led(1);
             sleep_ms(450);
         }
-        set_onboard_led(1);
     }
+    // sign of live
+    set_onboard_led(1);
     // start watchdog
     watchdog_enable(500, 1);
     // check for push button to select operation mode
