@@ -79,8 +79,8 @@ int main(void)
     if (opmode == opmode_esc)
     {
         usbd_serial_init();
-        init_uart_data();
-        init_uart_hw();
+        init_uart_data_usb();
+        init_uart_hw_usb();
         // start core 1
         multicore_launch_core1(core1_entry);
         // run esc programmer
@@ -90,7 +90,7 @@ int main(void)
     else if (opmode == opmode_rec)
     {
         usbd_serial_init();
-        init_uart_data();
+        init_uart_data_usb();
         // start core 1
         multicore_launch_core1(core1_entry);
         // run receiver tester
@@ -100,7 +100,7 @@ int main(void)
     else if (opmode == opmode_servo)
     {
         usbd_serial_init();
-        init_uart_data();
+        init_uart_data_usb();
         // start core 1
         multicore_launch_core1(core1_entry);
         // run servo tester

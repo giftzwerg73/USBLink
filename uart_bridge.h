@@ -10,7 +10,7 @@
 
 #define BUFFER_SIZE 2560
 
-#define DEF_BIT_RATE 115200
+#define DEF_BIT_RATE 19200
 #define DEF_STOP_BITS 1
 #define DEF_PARITY 0
 #define DEF_DATA_BITS 8
@@ -35,16 +35,15 @@ typedef struct
     uint8_t usb_buffer[BUFFER_SIZE];
     uint32_t usb_pos;
     mutex_t usb_mtx;
-    uint32_t pending_echo_bytes;
 } uart_data_t;
 
-void init_uart_data(void);
-void init_uart_hw(void);
+void init_uart_data_usb(void);
+void init_uart_hw_usb(void);
+void update_uart_cfg_usb(void);
+void write_data_usb2uart(void);
 void usb_cdc_process(void);
-void update_uart_cfg(void);
-void uart_write_bytes(void);
-void dbg_print_usb(uint8_t *msg);
-void dbg_putc_usb(uint8_t data);
-void dbg_read_usb(uint8_t *msg);
+void print_usb(uint8_t *msg);
+void putc_usb(uint8_t data);
+void read_usb(uint8_t *msg);
 
 #endif /* _UART_BRIDGE_H_ */

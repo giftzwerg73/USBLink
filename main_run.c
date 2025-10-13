@@ -36,8 +36,8 @@ void run_esc_app(void)
     while (1)
     {
         watchdog_update();
-        update_uart_cfg();
-        uart_write_bytes();
+        update_uart_cfg_usb();
+        write_data_usb2uart();
         escpower = check_escpwr();
 
         if (escpower == 0)
@@ -45,7 +45,7 @@ void run_esc_app(void)
             escpower_cnt++;
             if (escpower_cnt > msgupdatetime)
             {
-                dbg_print_usb("Switch power on\n");
+                print_usb("Switch power on\n");
                 escpower_cnt = 0;
             }
         }
@@ -55,7 +55,7 @@ void run_esc_app(void)
         {
             if (escpower == 0)
             {
-                dbg_print_usb("Going down esc progrmmer\n");
+                print_usb("Going down esc progrmmer\n");
             }
             trigger_reset();
         }
@@ -81,8 +81,8 @@ void run_receiver_tester_app(void)
     while (1)
     {
         watchdog_update();
-        update_uart_cfg();
-        dbg_read_usb(stdin_buf);
+        update_uart_cfg_usb();
+        read_usb(stdin_buf);
         escpower = check_escpwr();
 
         switch (state)
@@ -106,7 +106,7 @@ void run_receiver_tester_app(void)
                     escpower_cnt++;
                     if (escpower_cnt > msgupdatetime)
                     {
-                        dbg_print_usb("Switch power on\n");
+                        print_usb("Switch power on\n");
                         escpower_cnt = 0;
                     }
                 }
@@ -118,14 +118,14 @@ void run_receiver_tester_app(void)
                     if (escpower_cnt > pwrupdlytime)
                     {
                         rc_reset_input_pulse_width(RECV_CH1_PIN);
-                        dbg_print_usb("Start reading pulses\n");
+                        print_usb("Start reading pulses\n");
                         escpower_cnt = 0;
                         state = 3;
                     }
                 }
                 else
                 {
-                    dbg_print_usb("Power is off\n");
+                    print_usb("Power is off\n");
                     escpower_cnt = 0;
                     state = 4;
                 }
@@ -139,13 +139,13 @@ void run_receiver_tester_app(void)
                         // Read input from RC receiver - that is pulse width on input pin.
                         pulse = rc_get_input_pulse_width(RECV_CH1_PIN);
                         sprintf(print_buf, "Pulse ch1 = %lu\n", pulse);
-                        dbg_print_usb(print_buf);
+                        print_usb(print_buf);
                         escpower_cnt = 0;
                     }
                 }
                 else
                 {
-                    dbg_print_usb("Power is off\n");
+                    print_usb("Power is off\n");
                     escpower_cnt = 0;
                     state = 4;
                 }
@@ -153,7 +153,7 @@ void run_receiver_tester_app(void)
             case 4:
                 if (escpower)
                 {
-                    dbg_print_usb("Power is on again\n");
+                    print_usb("Power is on again\n");
                     escpower_cnt = 0;
                     state = 2;
                 }
@@ -165,7 +165,7 @@ void run_receiver_tester_app(void)
         sleep_us(looptime);
         if (check_button_event() == bt_evtup_long)
         {
-            dbg_print_usb("Going down receiver test\n");
+            print_usb("Going down receiver test\n");
             trigger_reset();
         }
     }
@@ -197,8 +197,8 @@ void run_servo_tester_app(void)
     while (1)
     {
         watchdog_update();
-        update_uart_cfg();
-        dbg_read_usb(stdin_buf);
+        update_uart_cfg_usb();
+        read_usb(stdin_buf);
         escpower = check_escpwr();
 
         stdin_buf_pos = 0;
@@ -248,7 +248,7 @@ void run_servo_tester_app(void)
         {
             update_print_angle = 0;
             sprintf(print_buf, "Set ch1 = %lu deg\n", angle);
-            dbg_print_usb(print_buf);
+            print_usb(print_buf);
         }
 
         switch (state)
@@ -259,7 +259,7 @@ void run_servo_tester_app(void)
                     escpower_cnt++;
                     if (escpower_cnt > msgupdatetime)
                     {
-                        dbg_print_usb("Switch power off first\n");
+                        print_usb("Switch power off first\n");
                         escpower_cnt = 0;
                     }
                 }
@@ -271,7 +271,7 @@ void run_servo_tester_app(void)
             case 1:// init wait for power up
                 if (escpower)
                 {
-                    dbg_print_usb("Init PWM\n");
+                    print_usb("Init PWM\n");
                     Servo1 = rc_servo_init(SERV_CH1_PIN);
                     rc_init_input(RECV_CH1_PIN, true);
                     escpower_cnt = 0;
@@ -286,14 +286,14 @@ void run_servo_tester_app(void)
                     {
                         rc_servo_start(&Servo1, angle);// set servo1 start degrees
                         sprintf(print_buf, "Start ch1 = %lu deg\n", angle);
-                        dbg_print_usb(print_buf);
+                        print_usb(print_buf);
                         escpower_cnt = 0;
                         state = 3;
                     }
                 }
                 else
                 {
-                    dbg_print_usb("Power is off\n");
+                    print_usb("Power is off\n");
                     escpower_cnt = 0;
                     state = 4;
                 }
@@ -307,7 +307,7 @@ void run_servo_tester_app(void)
                         // Read input from RC receiver - that is pulse width on input pin.
                         pulse = rc_get_input_pulse_width(RECV_CH1_PIN);
                         sprintf(print_buf, "Pulse ch1 = %lu\n", pulse);
-                        dbg_print_usb(print_buf);
+                        print_usb(print_buf);
                     }
 
                     if (escpower_cnt > pwmupdatetime)
@@ -318,14 +318,14 @@ void run_servo_tester_app(void)
                             update_angle = 0;
                             rc_servo_set_angle(&Servo1, angle);
                             sprintf(print_buf, "Write ch1 = %lu deg\n", angle);
-                            dbg_print_usb(print_buf);
+                            print_usb(print_buf);
                         }
                     }
                 }
                 else
                 {
                     rc_servo_stop(&Servo1, true);
-                    dbg_print_usb("Power is off\n");
+                    print_usb("Power is off\n");
                     escpower_cnt = 0;
                     state = 4;
                 }
@@ -333,7 +333,7 @@ void run_servo_tester_app(void)
             case 4:
                 if (escpower)
                 {
-                    dbg_print_usb("Restart without init PWM\n");
+                    print_usb("Restart without init PWM\n");
                     escpower_cnt = 0;
                     state = 2;
                 }
@@ -345,7 +345,7 @@ void run_servo_tester_app(void)
         sleep_us(looptime);
         if (check_button_event() == bt_evtup_long)
         {
-            dbg_print_usb("Going down servo test\n");
+            print_usb("Going down servo test\n");
             trigger_reset();
         }
     }
