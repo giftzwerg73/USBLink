@@ -4,6 +4,7 @@
  */
 
 
+#include "pico/cyw43_arch.h"
 #include <hardware/irq.h>
 #include <hardware/structs/sio.h>
 #include <hardware/uart.h>
@@ -12,7 +13,6 @@
 #include <pico/stdlib.h>
 #include <string.h>
 #include <tusb.h>
-#include "pico/cyw43_arch.h"
 
 #include "main_run.h"
 #include "uart_bridge.h"
@@ -51,7 +51,7 @@ int main(void)
     // init gpio but not uart pins
     init_gpio();
     // init rf
-    if (cyw43_arch_init()) 
+    if (cyw43_arch_init())
     {
         return -1;
     }

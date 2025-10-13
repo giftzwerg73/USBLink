@@ -4,6 +4,7 @@
  */
 
 
+#include "pico/cyw43_arch.h"
 #include <hardware/irq.h>
 #include <hardware/structs/sio.h>
 #include <hardware/uart.h>
@@ -11,7 +12,6 @@
 #include <pico/multicore.h>
 #include <pico/stdlib.h>
 #include <string.h>
-#include "pico/cyw43_arch.h"
 
 #include "uart_bridge.h"
 #include "user_gpio.h"
@@ -20,14 +20,20 @@
 // read usb power
 inline bool get_vusb(void)
 {
-    //return gpio_get(24);
+    // return gpio_get(24);
     return cyw43_arch_gpio_get(CYW43_WL_GPIO_VBUS_PIN);
+}
+
+// turn onboard led on or off
+inline void set_onboard_led(bool led_on)
+{
+    // gpio_put(PICO_DEFAULT_LED_PIN, led_on);
+    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, led_on);
 }
 
 // read esc power
 inline bool get_escpower(void)
 {
-	//return gpio_get(24);
     return gpio_get(ESC_PWR_PIN);
 }
 
@@ -35,13 +41,6 @@ inline bool get_escpower(void)
 inline bool get_button(void)
 {
     return gpio_get(SW_PIN);
-}
-
-// turn onboard led on or off
-inline void set_onboard_led(bool led_on)
-{
-    //gpio_put(PICO_DEFAULT_LED_PIN, led_on);
-    cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, led_on);
 }
 
 // set blue led on or off
@@ -71,9 +70,9 @@ inline void toggle_red_led(void)
 // initialise gpio
 void init_gpio(void)
 {
-	// init gpio
-    //gpio_init(PICO_DEFAULT_LED_PIN);
-    //gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+    // init gpio
+    // gpio_init(PICO_DEFAULT_LED_PIN);
+    // gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
     gpio_init(LED_PIN_BLUE);
     gpio_init(LED_PIN_RED);
     gpio_init(SW_PIN);

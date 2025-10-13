@@ -4,6 +4,7 @@
  */
 
 
+#include "pico/cyw43_arch.h"
 #include <hardware/irq.h>
 #include <hardware/structs/sio.h>
 #include <hardware/uart.h>
@@ -11,7 +12,6 @@
 #include <pico/stdlib.h>
 #include <string.h>
 #include <tusb.h>
-#include "pico/cyw43_arch.h"
 
 #include "uart_bridge.h"
 #include "user_gpio.h"
