@@ -4,11 +4,12 @@
  */
 
 
-#include "pico/cyw43_arch.h"
+
 #include <hardware/irq.h>
 #include <hardware/structs/sio.h>
 #include <hardware/uart.h>
 #include <hardware/watchdog.h>
+#include <pico/cyw43_arch.h>
 #include <pico/multicore.h>
 #include <pico/stdlib.h>
 #include <string.h>
