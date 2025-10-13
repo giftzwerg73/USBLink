@@ -71,13 +71,14 @@ int main(void)
     set_onboard_led(1);
     // start watchdog
     watchdog_enable(500, 1);
-    // check for push button to select operation mode
-    opmode = opmode_select();
-    // feed watchdog
-    watchdog_update();
     // check if we get power from usb
     if (check_usbpwr() == 1)
     {
+        // check for push button to select operation mode
+        opmode = opmode_select();
+        // feed watchdog
+        watchdog_update();
+        
         // esc programmer mode
         if (opmode == opmode_esc)
         {
