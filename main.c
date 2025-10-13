@@ -22,7 +22,7 @@
 
 
 // main program core 1
-void core1_entry(void)
+void core1_entry_usb(void)
 {
     bool con;
 
@@ -78,7 +78,7 @@ int main(void)
         opmode = opmode_select();
         // feed watchdog
         watchdog_update();
-        
+
         // esc programmer mode
         if (opmode == opmode_esc)
         {
@@ -86,7 +86,7 @@ int main(void)
             init_uart_data_usb();
             init_uart_hw_usb();
             // start core 1
-            multicore_launch_core1(core1_entry);
+            multicore_launch_core1(core1_entry_usb);
             // run esc programmer
             run_esc_app();
         }
@@ -96,7 +96,7 @@ int main(void)
             usbd_serial_init();
             init_uart_data_usb();
             // start core 1
-            multicore_launch_core1(core1_entry);
+            multicore_launch_core1(core1_entry_usb);
             // run receiver tester
             run_receiver_tester_app();
         }
@@ -106,7 +106,7 @@ int main(void)
             usbd_serial_init();
             init_uart_data_usb();
             // start core 1
-            multicore_launch_core1(core1_entry);
+            multicore_launch_core1(core1_entry_usb);
             // run servo tester
             run_servo_tester_app();
         }
