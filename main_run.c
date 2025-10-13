@@ -350,3 +350,37 @@ void run_servo_tester_app(void)
         }
     }
 }
+
+// main no_usb -> just blink
+void run_no_usb_app(void)
+{
+    uint32_t x;
+
+    x = 0;
+    while (1)
+    {
+        // feed wdt
+        watchdog_update();
+        // blink
+        x++;
+        if (x == 100 * 100)
+        {
+            set_onboard_led(0);
+            set_blue_led(1);
+            set_red_led(0);
+        }
+        else if (x >= 200 * 100)
+        {
+            set_onboard_led(1);
+            set_blue_led(0);
+            set_red_led(1);
+            x = 0;
+        }
+
+        sleep_us(looptime);
+        if (check_button_event() == bt_evtup_long)
+        {
+            trigger_reset();
+        }
+    }
+}
