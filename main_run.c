@@ -223,8 +223,11 @@ void run_receiver_tester_app(void)
         read_cdc_data(stdin_buf);
         c = get_char_stdio();
 
-        if (averaging_toggle(&mean_nr, c))
-            make_mean(&pulse, pulse, mean_nr, 2);
+        if (c)
+        {
+            if (averaging_toggle(&mean_nr, c))
+                make_mean(&pulse, pulse, mean_nr, 2);
+        }
 
         timecnt++;
         if (recvupdate_cnt++ > recvupdatetime)
@@ -284,14 +287,17 @@ void run_servo_tester_app(void)
         read_cdc_data(stdin_buf);
         c = get_char_stdio();
 
-        if (averaging_toggle(&mean_nr, c))
-            make_mean(&pulse, pulse, mean_nr, 2);
-
-        if (update_angle_from_stdio(&angle, c))
+        if (c)
         {
-            rc_servo_set_angle(&servo1, angle);
-            sprintf(print_buf, "Update: Angle = %03lu deg\n", angle);
-            print_usb(print_buf);
+            if (averaging_toggle(&mean_nr, c))
+                make_mean(&pulse, pulse, mean_nr, 2);
+
+            if (update_angle_from_stdio(&angle, c))
+            {
+                rc_servo_set_angle(&servo1, angle);
+                sprintf(print_buf, "Update: Angle = %03lu deg\n", angle);
+                print_usb(print_buf);
+            }
         }
 
         timecnt++;
