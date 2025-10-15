@@ -144,9 +144,8 @@ void run_receiver_tester_app(void)
 
         if (recvupdate_cnt++ > recvupdatetime)
         {
-            // Read input from RC receiver - that is pulse width on input pin.
             pulse = rc_get_input_pulse_width(RECV_CH1_PIN);
-            sprintf(print_buf, "Pulse ch1 = %lu\n", pulse);
+            sprintf(print_buf, "Pulse = %04lu us\n", pulse);
             print_usb(print_buf);
             recvupdate_cnt = 0;
         }
@@ -170,8 +169,8 @@ void init_servo_tester_hw(void)
 void run_servo_tester_app(void)
 {
     uint32_t recvupdate_cnt;
-    uint32_t angle;
     uint32_t pulse;
+    uint32_t angle;
     char c;
 
     set_blue_led(0);
@@ -195,7 +194,6 @@ void run_servo_tester_app(void)
 
         if (recvupdate_cnt++ > recvupdatetime)
         {
-            // Read input from RC receiver - that is pulse width on input pin.
             pulse = rc_get_input_pulse_width(RECV_CH1_PIN);
             sprintf(print_buf, "Pulse = %04lu   Angle = %03lu\n", pulse, angle);
             print_usb(print_buf);
