@@ -40,6 +40,7 @@ bool get_button(void);
 uint8_t get_button_state(void);
 uint8_t opmode_select(void);
 bool check_escpwr(void);
+bool check_usbpwr(void);
 uint8_t check_button_event(void);
 void trigger_reset(void);
 void sleep_x10ms(uint32_t wait);

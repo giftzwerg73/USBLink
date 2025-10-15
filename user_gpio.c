@@ -250,11 +250,23 @@ uint8_t opmode_select(void)
     }
 }
 
-
 // check esc power gpio
 bool check_escpwr(void)
 {
     if (get_escpower() == 1 && get_escpower() == 1 && get_escpower() == 1)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+// check esc power gpio
+bool check_usbpwr(void)
+{
+    if (get_vusb() == 1 && get_vusb() == 1 && get_vusb() == 1)
     {
         return 1;
     }
