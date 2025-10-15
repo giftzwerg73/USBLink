@@ -315,7 +315,6 @@ uint8_t check_button_event(void)
             ret = bt_down;
             if (time_cnt < 10000 * 100)
                 time_cnt++;
-
             if (button_state == bt_up)
             {
                 if (time_cnt > 100 * 100 && time_cnt < 1000 * 100)
