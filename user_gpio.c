@@ -179,7 +179,7 @@ uint8_t opmode_select(void)
                 {
                     set_blue_led(1);
                 }
-                if (blink_cnt == blink_on + blink_off)
+                if (blink_cnt >= blink_on + blink_off)
                 {
                     set_blue_led(0);
                     blink_cnt = 0;
