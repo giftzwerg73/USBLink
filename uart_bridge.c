@@ -214,7 +214,7 @@ void putc_usb(uint8_t data)
     mutex_exit(&ud->uart_mtx);
 }
 
-void read_usb(uint8_t *msg)
+void getc_usb(uint8_t *msg)
 {
     uart_data_t *ud = &UART_DATA;
 

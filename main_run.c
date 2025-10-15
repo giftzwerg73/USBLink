@@ -82,7 +82,7 @@ void run_receiver_tester_app(void)
     {
         watchdog_update();
         update_uart_cfg_usb();
-        read_usb(stdin_buf);
+        getc_usb(stdin_buf);
         escpower = check_escpwr();
 
         switch (state)
@@ -198,7 +198,7 @@ void run_servo_tester_app(void)
     {
         watchdog_update();
         update_uart_cfg_usb();
-        read_usb(stdin_buf);
+        getc_usb(stdin_buf);
         escpower = check_escpwr();
 
         stdin_buf_pos = 0;
