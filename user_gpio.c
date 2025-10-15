@@ -358,11 +358,3 @@ void trigger_reset(void)
     while (1)
         blink_cnt++;
 }
-
-<<<<<<< HEAD
-=======
-
-void init_uart_hw_gpio(void)
-{
-}
->>>>>>> recover

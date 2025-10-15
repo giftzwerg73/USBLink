@@ -4,7 +4,6 @@
  */
 
 
-
 #include <hardware/irq.h>
 #include <hardware/structs/sio.h>
 #include <hardware/uart.h>
