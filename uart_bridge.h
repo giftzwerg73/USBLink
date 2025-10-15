@@ -37,13 +37,13 @@ typedef struct
     mutex_t usb_mtx;
 } uart_data_t;
 
-void init_uart_data_usb(void);
-void init_uart_hw_usb(void);
-void update_uart_cfg_usb(void);
+void init_cdc_data(void);
+void init_cdc_uart_hw(void);
+void update_cdc_uart_cfg(void);
 void write_data_usb2uart(void);
 void usb_cdc_process(void);
 void print_usb(uint8_t *msg);
 void putc_usb(uint8_t data);
-void getc_usb(uint8_t *msg);
+void read_cdc_data(uint8_t *msg);
 
 #endif /* _UART_BRIDGE_H_ */

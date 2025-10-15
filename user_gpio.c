@@ -358,3 +358,4 @@ void trigger_reset(void)
     while (1)
         blink_cnt++;
 }
+
