@@ -22,6 +22,7 @@
 static const uint32_t looptime = 10;
 static const uint32_t recvupdatetime = 100 * 1000 / looptime;
 static const uint32_t escpwrupdatetime = 100 * 1000 / looptime;
+static const uint32_t msgupdatetime = 1000 * 1000 / looptime;
 
 static rc_servo servo1;
 static uint8_t stdin_buf[BUFFER_SIZE];
@@ -99,6 +100,80 @@ static bool update_angle_from_stdio(uint32_t *val, char c)
     return false;
 }
 
+static bool averaging_toggle(uint8_t *mean_nr, char c)
+{
+    uint8_t nr;
+
+    nr = *mean_nr;
+    if (c == 'a')
+    {
+        if (nr != 1)
+        {
+            *mean_nr = 1;
+            print_usb("Pulse averaging OFF\n");
+            return true;
+        }
+        else
+        {
+            *mean_nr = 4;
+            print_usb("Pulse averaging ON\n");
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool make_mean(uint32_t *reslut, uint32_t newval, uint8_t mean_nr, const uint8_t mean_type)
+{
+#define MAX_DEPTH 32
+    static uint8_t mean_cnt = 0;
+    static uint32_t mean_buf[MAX_DEPTH] = { 0 };
+    static uint64_t mean_sum = 0;
+    uint32_t x;
+
+    if (mean_nr > MAX_DEPTH)
+        mean_nr = MAX_DEPTH;
+
+    if (mean_cnt >= mean_nr)
+        mean_cnt = 0;
+
+    if (mean_type == 0)// average
+    {
+        mean_buf[mean_cnt] = newval;
+        mean_cnt++;
+        if (mean_cnt == mean_nr)
+        {
+            mean_sum = 0;
+            for (x = 0; x < mean_nr; x++)
+            {
+                mean_sum = mean_sum + mean_buf[x];
+            }
+            *reslut = mean_sum / mean_nr;
+            return true;
+        }
+    }
+    else if (mean_type == 1)// gliding mean
+    {
+        mean_buf[mean_cnt] = newval;
+        mean_cnt++;
+        mean_sum = 0;
+        for (x = 0; x < mean_nr; x++)
+        {
+            mean_sum = mean_sum + mean_buf[x];
+        }
+        *reslut = mean_sum / mean_nr;
+        return true;
+    }
+    else// reset
+    {
+        mean_cnt = 0;
+        mean_sum = 0;
+        memset(mean_buf, 0, sizeof(mean_buf));
+    }
+
+    return false;
+}
+
 // main esc programmer
 void run_esc_app(void)
 {
@@ -129,10 +204,16 @@ void run_receiver_tester_app(void)
 {
     uint32_t recvupdate_cnt;
     uint32_t pulse;
+    uint32_t pulse_old;
+    uint32_t timecnt;
+    uint8_t mean_nr;
     char c;
 
     set_blue_led(0);
     recvupdate_cnt = 0;
+    pulse_old = 0xFFFFFFFF;
+    timecnt = 0;
+    mean_nr = 4;
     stdin_buf_pos = 0;
     memset(stdin_buf, 0, sizeof(stdin_buf));
 
@@ -142,11 +223,23 @@ void run_receiver_tester_app(void)
         read_cdc_data(stdin_buf);
         c = get_char_stdio();
 
+        if (averaging_toggle(&mean_nr, c))
+            make_mean(&pulse, pulse, mean_nr, 2);
+
+        timecnt++;
         if (recvupdate_cnt++ > recvupdatetime)
         {
             pulse = rc_get_input_pulse_width(RECV_CH1_PIN);
-            sprintf(print_buf, "Pulse = %04lu us\n", pulse);
-            print_usb(print_buf);
+            if (make_mean(&pulse, pulse, mean_nr, 1))
+            {
+                if (pulse != pulse_old || timecnt >= msgupdatetime)
+                {
+                    sprintf(print_buf, "Pulse = %04lu us\n", pulse);
+                    print_usb(print_buf);
+                    pulse_old = pulse;
+                    timecnt = 0;
+                }
+            }
             recvupdate_cnt = 0;
         }
 
@@ -170,12 +263,18 @@ void run_servo_tester_app(void)
 {
     uint32_t recvupdate_cnt;
     uint32_t pulse;
+    uint32_t pulse_old;
     uint32_t angle;
+    uint32_t timecnt;
+    uint8_t mean_nr;
     char c;
 
     set_blue_led(0);
     recvupdate_cnt = 0;
     angle = 90;
+    pulse_old = 0xFFFFFFFF;
+    timecnt = 0;
+    mean_nr = 4;
     stdin_buf_pos = 0;
     memset(stdin_buf, 0, sizeof(stdin_buf));
 
@@ -185,6 +284,9 @@ void run_servo_tester_app(void)
         read_cdc_data(stdin_buf);
         c = get_char_stdio();
 
+        if (averaging_toggle(&mean_nr, c))
+            make_mean(&pulse, pulse, mean_nr, 2);
+
         if (update_angle_from_stdio(&angle, c))
         {
             rc_servo_set_angle(&servo1, angle);
@@ -192,11 +294,20 @@ void run_servo_tester_app(void)
             print_usb(print_buf);
         }
 
+        timecnt++;
         if (recvupdate_cnt++ > recvupdatetime)
         {
             pulse = rc_get_input_pulse_width(RECV_CH1_PIN);
-            sprintf(print_buf, "Pulse = %04lu   Angle = %03lu\n", pulse, angle);
-            print_usb(print_buf);
+            if (make_mean(&pulse, pulse, mean_nr, 1))
+            {
+                if (pulse != pulse_old || timecnt >= msgupdatetime)
+                {
+                    sprintf(print_buf, "Pulse = %04lu   Angle = %03lu\n", pulse, angle);
+                    print_usb(print_buf);
+                    pulse_old = pulse;
+                    timecnt = 0;
+                }
+            }
             recvupdate_cnt = 0;
         }
 
