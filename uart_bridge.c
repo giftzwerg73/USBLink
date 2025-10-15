@@ -145,7 +145,7 @@ void uart0_irq_fn(void)
     read_data_uart2usb();
 }
 
-void update_uart_cfg_usb(void)
+void update_cdc_uart_cfg(void)
 {
     const uart_id_t *ui = &UART_ID;
     uart_data_t *ud = &UART_DATA;
@@ -214,7 +214,7 @@ void putc_usb(uint8_t data)
     mutex_exit(&ud->uart_mtx);
 }
 
-void getc_usb(uint8_t *msg)
+void read_cdc_data(uint8_t *msg)
 {
     uart_data_t *ud = &UART_DATA;
 
@@ -263,7 +263,7 @@ void write_data_usb2uart(void)
     }
 }
 
-void init_uart_hw_usb(void)
+void init_cdc_uart_hw(void)
 {
     const uart_id_t *ui = &UART_ID;
     uart_data_t *ud = &UART_DATA;
@@ -291,7 +291,7 @@ void init_uart_hw_usb(void)
     uart_set_irq_enables(ui->inst, true, false);
 }
 
-void init_uart_data_usb(void)
+void init_cdc_data(void)
 {
     const uart_id_t *ui = &UART_ID;
     uart_data_t *ud = &UART_DATA;
