@@ -25,14 +25,31 @@ The different modes will be visualized by the blinkrate of the blue LED.
 | Recever Tester      | 200ms on  200ms off | 
 | Servo Tester        | 100ms on  100ms off |  
 
-To enter the selected mode do a long key-press (>3000ms). To confirm the selection the red and blue LED will start
-blinking alternately for 5 times.
+To enter the selected mode do a long key-press (>2500ms, green LED will flash once when ready to release). 
+To confirm the selection the red and blue LED will start blinking alternately for 5 times.
 
-To exit a mode do a long key-press (>3000ms). The blue LED will start bliniking fast and a reset is triggered. 
+To exit a mode do a long key-press (>2500ms). The blue LED will start bliniking fast and a reset is triggered. 
 During boot hold down button to select tester-modes or leave button unpressed to enter programmer mode (same as above).
 
+ESC-Mode
+--------
+Connect AM32-ESC, USB and start configuartor.
 
-
-
+Receiver-Mode
+-------------
+Connect receiver and USB, open a terminal on PC. 
+Enter receiver mode as discribed above.
+See measured pulse width in micro-seconds.
+Averaging can be toggled by pressing key 'a'.
   
+Servo-Mode
+----------
+Connect servo or ESC and USB, open a terminal on PC.
+Enter servo mode as discribed above.
+Use key '+' to increment  and '-' to decrement pulse width (angle).
+Key 'o' will set pulse width to 2000us.
+Key 'k' will set pulse width to 1500us
+Key 'm' will set pulse width to 1000us
+At the same time pulse width is measured in micro-seconds.
+Averaging can be toggled by pressing key 'a'.
         
