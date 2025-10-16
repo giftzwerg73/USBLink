@@ -100,29 +100,6 @@ static bool update_angle_from_stdio(uint32_t *val, char c)
     return false;
 }
 
-static bool averaging_toggle(uint8_t *mean_nr, char c)
-{
-    uint8_t nr;
-
-    nr = *mean_nr;
-    if (c == 'a')
-    {
-        if (nr != 1)
-        {
-            *mean_nr = 1;
-            print_usb("Pulse averaging OFF\n");
-            return true;
-        }
-        else
-        {
-            *mean_nr = 4;
-            print_usb("Pulse averaging ON\n");
-            return true;
-        }
-    }
-    return false;
-}
-
 static bool make_mean(uint32_t *reslut, uint32_t newval, uint8_t mean_nr, const uint8_t mean_type)
 {
 #define MAX_DEPTH 32
@@ -130,6 +107,12 @@ static bool make_mean(uint32_t *reslut, uint32_t newval, uint8_t mean_nr, const 
     static uint32_t mean_buf[MAX_DEPTH] = { 0 };
     static uint64_t mean_sum = 0;
     uint32_t x;
+
+    if (mean_nr <= 1)
+    {
+        *reslut = newval;
+        return true;
+    }
 
     if (mean_nr > MAX_DEPTH)
         mean_nr = MAX_DEPTH;
@@ -174,6 +157,40 @@ static bool make_mean(uint32_t *reslut, uint32_t newval, uint8_t mean_nr, const 
     return false;
 }
 
+static bool averaging_toggle(uint8_t *mean_nr, char c)
+{
+    uint32_t tmp;
+
+    if (c == 'a')
+    {
+        if (*mean_nr == 1)
+        {
+            make_mean(&tmp, 0, 4, 2);
+            *mean_nr = 4;
+            return true;
+        }
+        else if (*mean_nr == 4)
+        {
+            make_mean(&tmp, 0, 8, 2);
+            *mean_nr = 8;
+            return true;
+        }
+        else if (*mean_nr == 8)
+        {
+            make_mean(&tmp, 0, 1, 2);
+            *mean_nr = 1;
+            return true;
+        }
+        else
+        {
+            make_mean(&tmp, 0, 1, 2);
+            *mean_nr = 1;
+            return true;
+        }
+    }
+    return false;
+}
+
 // main esc programmer
 void run_esc_app(void)
 {
@@ -202,11 +219,12 @@ void init_receiver_tester_hw(void)
 // main reciever tester
 void run_receiver_tester_app(void)
 {
-    uint32_t recvupdate_cnt;
-    uint32_t pulse;
-    uint32_t pulse_old;
-    uint32_t timecnt;
-    uint8_t mean_nr;
+    static uint32_t recvupdate_cnt;
+    static uint32_t pulse;
+    static uint32_t pulse_old;
+    static uint32_t timecnt;
+    static uint8_t mean_nr;
+    uint32_t tmp32;
     char c;
 
     set_blue_led(0);
@@ -226,18 +244,21 @@ void run_receiver_tester_app(void)
         if (c)
         {
             if (averaging_toggle(&mean_nr, c))
-                make_mean(&pulse, pulse, mean_nr, 2);
+            {
+                sprintf(print_buf, "Pulse averaging = %02lu\n", mean_nr);
+                print_usb(print_buf);
+            }
         }
 
         timecnt++;
         if (recvupdate_cnt++ > recvupdatetime)
         {
-            pulse = rc_get_input_pulse_width(RECV_CH1_PIN);
-            if (make_mean(&pulse, pulse, mean_nr, 1))
+            tmp32 = rc_get_input_pulse_width(RECV_CH1_PIN);
+            if (make_mean(&pulse, tmp32, mean_nr, 1))
             {
                 if (pulse != pulse_old || timecnt >= msgupdatetime)
                 {
-                    sprintf(print_buf, "Pulse = %04lu us\n", pulse);
+                    sprintf(print_buf, "Pulse = %04lu us   AVG = %02lu\n", pulse, mean_nr);
                     print_usb(print_buf);
                     pulse_old = pulse;
                     timecnt = 0;
@@ -264,12 +285,13 @@ void init_servo_tester_hw(void)
 // main servo tester
 void run_servo_tester_app(void)
 {
-    uint32_t recvupdate_cnt;
-    uint32_t pulse;
-    uint32_t pulse_old;
-    uint32_t angle;
-    uint32_t timecnt;
-    uint8_t mean_nr;
+    static uint32_t recvupdate_cnt;
+    static uint32_t pulse;
+    static uint32_t pulse_old;
+    static uint32_t angle;
+    static uint32_t timecnt;
+    static uint8_t mean_nr;
+    uint32_t tmp32;
     char c;
 
     set_blue_led(0);
@@ -290,7 +312,10 @@ void run_servo_tester_app(void)
         if (c)
         {
             if (averaging_toggle(&mean_nr, c))
-                make_mean(&pulse, pulse, mean_nr, 2);
+            {
+                sprintf(print_buf, "Pulse averaging = %02lu\n", mean_nr);
+                print_usb(print_buf);
+            }
 
             if (update_angle_from_stdio(&angle, c))
             {
@@ -303,12 +328,12 @@ void run_servo_tester_app(void)
         timecnt++;
         if (recvupdate_cnt++ > recvupdatetime)
         {
-            pulse = rc_get_input_pulse_width(RECV_CH1_PIN);
-            if (make_mean(&pulse, pulse, mean_nr, 1))
+            tmp32 = rc_get_input_pulse_width(RECV_CH1_PIN);
+            if (make_mean(&pulse, tmp32, mean_nr, 1))
             {
                 if (pulse != pulse_old || timecnt >= msgupdatetime)
                 {
-                    sprintf(print_buf, "Pulse = %04lu   Angle = %03lu\n", pulse, angle);
+                    sprintf(print_buf, "Pulse = %04lu   Angle = %03lu   AVG = %02lu\n", pulse, angle, mean_nr);
                     print_usb(print_buf);
                     pulse_old = pulse;
                     timecnt = 0;

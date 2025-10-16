@@ -315,6 +315,16 @@ uint8_t check_button_event(void)
             ret = bt_down;
             if (time_cnt < 10000 * 100)
                 time_cnt++;
+
+            if (time_cnt == 2500 * 100)
+            {
+                set_onboard_led(0);
+            }
+            else if (time_cnt == 2600 * 100)
+            {
+                set_onboard_led(1);
+            }
+
             if (button_state == bt_up)
             {
                 if (time_cnt > 100 * 100 && time_cnt < 1000 * 100)
@@ -323,6 +333,7 @@ uint8_t check_button_event(void)
                 }
                 else if (time_cnt >= 2500 * 100)
                 {
+                    set_onboard_led(1);
                     ret = bt_evtup_long;
                 }
                 else
