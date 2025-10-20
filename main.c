@@ -19,6 +19,8 @@
 #include "usb_descriptors.h"
 #include "user_gpio.h"
 
+const char version[] = "USBLink FW_V1.0";
+
 
 // main program core 1
 void core1_entry_usb(void)
