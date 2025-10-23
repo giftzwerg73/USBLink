@@ -153,6 +153,8 @@ uint8_t opmode_select(void)
             case 0:// first check until button settled up or down
                 if (bt_evnt == bt_up)
                 {// -> esc mode
+                    set_blue_led(0);
+                    set_red_led(0);
                     opmode = opmode_esc;
                     return opmode;
                 }
