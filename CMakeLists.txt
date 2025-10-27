@@ -1,28 +1,67 @@
-# SPDX-License-Identifier: MIT
+# Generated Cmake Pico project file
 
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.13)
 
-set(PICO_BOARD pico_w)
-set(FAMILY pico_w)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-include(pico-sdk/pico_sdk_init.cmake)
+# Initialise pico_sdk from installed location
+# (note this can come from environment, CMake cache etc)
 
-project(USBLink VERSION 1.0.0)
+# == DO NOT EDIT THE FOLLOWING LINES for the Raspberry Pi Pico VS Code Extension to work ==
+if(WIN32)
+    set(USERHOME $ENV{USERPROFILE})
+else()
+    set(USERHOME $ENV{HOME})
+endif()
+set(sdkVersion 2.2.0)
+set(toolchainVersion 14_2_Rel1)
+set(picotoolVersion 2.2.0-a4)
+set(picoVscode ${USERHOME}/.pico-sdk/cmake/pico-vscode.cmake)
+if (EXISTS ${picoVscode})
+    include(${picoVscode})
+endif()
+# ====================================================================================
+set(PICO_BOARD pico_w CACHE STRING "Board type")
 
+# Pull in Raspberry Pi Pico SDK (must be before project)
+include(pico_sdk_import.cmake)
+
+project(USBLink C CXX ASM)
+
+# Initialise the Raspberry Pi Pico SDK
 pico_sdk_init()
 
-add_executable(USBLink main.c main_run.c user_gpio.c uart_bridge.c usb_descriptors.c rc.c)
+# Add executable. Default name is the project name, version 0.1
 
-target_include_directories(USBLink PUBLIC
-	./
-	pico-sdk/lib/tinyusb/src)
+add_executable(USBLink main.c main_run.c user_gpio.c uart_bridge.c usb_descriptors.c rc.c )
 
+pico_set_program_name(USBLink "USBLink")
+pico_set_program_version(USBLink "1.0")
+
+# Modify the below lines to enable/disable output over UART/USB
+pico_enable_stdio_uart(USBLink 0)
+pico_enable_stdio_usb(USBLink 0)
+
+# Add the standard library to the build
 target_link_libraries(USBLink
-	hardware_flash
+        pico_stdlib)
+
+# Add the standard include files to the build
+target_include_directories(USBLink PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}
+)
+
+# Add any user requested libraries
+target_link_libraries(USBLink 
+    hardware_flash
 	hardware_pwm
 	pico_multicore
-	pico_stdlib
 	tinyusb_device
-    pico_cyw43_arch_none)
-    
+    pico_cyw43_arch_none
+        
+        )
+
 pico_add_extra_outputs(USBLink)
+
