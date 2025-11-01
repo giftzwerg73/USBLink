@@ -60,8 +60,8 @@ int main(void)
 			set_onboard_led(1);
 			sleep_ms(450);
 		}
-	} else {
-		// sign of live
+	} else { // sign of live
+
 		set_onboard_led(1);
 	}
 	// start watchdog
@@ -72,8 +72,7 @@ int main(void)
 	watchdog_update();
 	// check if we get power from usb
 	if (check_usbpwr() == 1) {
-		// esc programmer mode
-		if (opmode == opmode_esc) {
+		if (opmode == opmode_esc) { // esc programmer mode
 			usbd_serial_init();
 			init_cdc_data();
 			init_cdc_uart_hw();
@@ -82,8 +81,8 @@ int main(void)
 			// run esc programmer
 			run_esc_app();
 		}
-		// reciever test mode
-		else if (opmode == opmode_rec) {
+
+		else if (opmode == opmode_rec) { // reciever test mode
 			usbd_serial_init();
 			init_cdc_data();
 			init_receiver_tester_hw();
@@ -92,8 +91,8 @@ int main(void)
 			// run receiver tester
 			run_receiver_tester_app();
 		}
-		// servo mode
-		else if (opmode == opmode_servo) {
+
+		else if (opmode == opmode_servo) { // servo mode
 			usbd_serial_init();
 			init_cdc_data();
 			init_servo_tester_hw();
@@ -103,8 +102,8 @@ int main(void)
 			run_servo_tester_app();
 		}
 	}
-	// power from extern only -> only blink
-	else {
+
+	else { // power from extern only -> only blink
 		run_no_usb_app();
 	}
 
