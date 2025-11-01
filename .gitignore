@@ -1,2 +1,6 @@
-build
+build/*
+!build/USBLink.hex
+!build/USBLink.uf2
+!build/USBLink.elf
+!build/USBLink.bin
 !.vscode/*
